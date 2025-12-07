@@ -6,26 +6,35 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const
+from flatlib import setPath  # ★ここを追加
 import os
 import requests
 
-# --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード機能 ---
+# --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
     files = {
         "seas_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/seas_18.se1",
         "semo_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/semo_18.se1"
     }
+    
+    # フォルダにあるか確認し、なければダウンロード
     for filename, url in files.items():
         if not os.path.exists(filename):
             try:
-                st.info(f"星のデータを準備中... ({filename})")
-                response = requests.get(url)
-                with open(filename, 'wb') as f:
-                    f.write(response.content)
+                with st.spinner(f'星のデータを準備中... ({filename})'):
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    with open(filename, 'wb') as f:
+                        f.write(response.content)
             except Exception as e:
                 st.error(f"データの準備に失敗しました: {e}")
+                st.stop()
 
+# 1. ダウンロードを実行
 download_ephemeris()
+
+# 2. ★重要：ダウンロードしたファイルの場所をflatlibに教える
+setPath('.') 
 
 # --- 🌟 ここから本番アプリ ---
 
@@ -46,7 +55,7 @@ ELEMENT_JP = {
 }
 COLORS = {'Fire': '#FF6B6B', 'Earth': '#4ECDC4', 'Air': '#A8D8EA', 'Water': '#3C40C6'}
 
-# 香りの定義（名前と対応するキー）
+# 香りの定義
 SCENTS_CONF = [
     {"element": "Fire", "name": "🔥 A (胆汁)", "key": "scent_a"},
     {"element": "Fire", "name": "🔥 B (胆汁)", "key": "scent_b"},
@@ -101,13 +110,11 @@ def main():
         st.info("※ 1位＝最も好き、8位＝最も苦手")
 
         scent_ranks = {}
-        # 各カテゴリーごとに区切って入力欄を表示
         current_element = None
         for scent in SCENTS_CONF:
             if current_element != scent["element"]:
                 st.subheader(ELEMENT_JP[scent["element"]])
                 current_element = scent["element"]
-            # 初期値を少し分散させる（全て1だと見づらいため）
             default_rank = (SCENTS_CONF.index(scent) % 8) + 1
             rank = st.number_input(f"{scent['name']} の順位", 1, 8, default_rank, key=scent["key"])
             scent_ranks[scent["key"]] = rank
@@ -119,13 +126,14 @@ def main():
     if calc_btn:
         try:
             # 1. 星の計算 (flatlib)
-            date = Datetime(f"{b_year}/{b_month:02d}/{b_day:02d}", f"{b_hour:02d}:{b_min:02d}", '+09:00')
+            date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
+            time_str = f"{b_hour:02d}:{b_min:02d}"
+            date = Datetime(date_str, time_str, '+09:00')
             pos = GeoPos(*CITY_COORDS[city_name])
             chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             
-            # 10天体 + ASC/MC のスコア計算
             targets = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, 
                        const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
                        const.ASC, const.MC]
@@ -138,20 +146,18 @@ def main():
                 if element:
                     astro_scores[element] += PLANET_SCORES.get(target_names[i], 0)
 
-            # 2. 香りの計算 (順位の合計)
-            # 苦手（数字が大きい）ほど、その体質が強いという理論
+            # 2. 香りの計算
             scent_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             for scent in SCENTS_CONF:
                 scent_scores[scent["element"]] += scent_ranks[scent["key"]]
 
-            # --- 結果表示エリア ---
+            # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
             
             col1, col2 = st.columns([1.2, 2])
 
             with col1:
                 st.subheader("スコア内訳")
-                # データフレーム作成
                 df_res = pd.DataFrame([
                     {"Element": "Fire", "Label": ELEMENT_JP["Fire"], "星スコア": astro_scores["Fire"], "香り順位合計": scent_scores["Fire"]},
                     {"Element": "Earth", "Label": ELEMENT_JP["Earth"], "星スコア": astro_scores["Earth"], "香り順位合計": scent_scores["Earth"]},
@@ -159,28 +165,23 @@ def main():
                     {"Element": "Water", "Label": ELEMENT_JP["Water"], "星スコア": astro_scores["Water"], "香り順位合計": scent_scores["Water"]},
                 ])
                 st.dataframe(df_res.set_index("Label"), use_container_width=True)
-                st.info("💡 香りの「順位合計」が大きいほど、その体質が強く（苦手に感じやすく）、小さいほどその体質が不足して（好きに感じやすく）います。")
 
             with col2:
                 st.subheader("バランス比較グラフ")
-                # グラフの準備
                 labels_list = [ELEMENT_JP[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 colors_list = [COLORS[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 astro_values = [astro_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 scent_values = [scent_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
 
-                # 二つの円グラフを並べる
                 fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]],
                                     subplot_titles=['🪐 星の比率 (先天的体質)', '🌸 香りの比率 (現在の状態)'])
 
-                # 左：星
                 fig.add_trace(go.Pie(
                     labels=labels_list, values=astro_values, name="Astrology",
                     marker_colors=colors_list, hole=.35,
                     hovertemplate="<b>%{label}</b><br>スコア: %{value}<br>割合: %{percent}"
                 ), 1, 1)
                 
-                # 右：香り（順位合計に基づく）
                 fig.add_trace(go.Pie(
                     labels=labels_list, values=scent_values, name="Scent",
                     marker_colors=colors_list, hole=.35,
