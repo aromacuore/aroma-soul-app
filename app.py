@@ -12,7 +12,6 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
-    # 公式リポジトリ(aloistr)のURLを使用
     files = {
         "sepl_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sepl_18.se1",
         "semo_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/semo_18.se1",
@@ -82,25 +81,41 @@ COLORS = {
     'Water': '#87CEEB'  # 水色
 }
 
-# 診断メッセージ（修正済み）
-ADVICE_MESSAGES = {
+# ★追加：星の性質メッセージ（本来の資質）
+ASTRO_MESSAGES = {
     "Fire": """
-    **🔥「火（胆汁質）」の香りを求めています** 今は直感や情熱、エネルギーを必要としている時期かもしれません。  
+    **🌟 あなたの本来の資質は「火（胆汁質）」タイプです** 直感力と情熱に溢れ、思い立ったら即行動するエネルギーを持っています。リーダーシップがあり、未来を切り開く力があなたの最大の魅力です。
+    """,
+    "Earth": """
+    **🌟 あなたの本来の資質は「地（神経質）」タイプです** 優れた感覚と現実的な処理能力を持っています。着実に物事を積み上げ、形にする力があり、周りに安心感を与える安定感があなたの最大の魅力です。
+    """,
+    "Air": """
+    **🌟 あなたの本来の資質は「風（多血質）」タイプです** 知的好奇心が旺盛で、軽やかに情報をキャッチする力を持っています。コミュニケーション能力が高く、新しい風を吹き込む力があなたの最大の魅力です。
+    """,
+    "Water": """
+    **🌟 あなたの本来の資質は「水（リンパ質）」タイプです** 豊かな感受性と共感力を持っています。人の心に寄り添い、優しさで包み込む力があり、周囲を癒やす力があなたの最大の魅力です。
+    """
+}
+
+# 香りの診断メッセージ（処方箋）
+SCENT_MESSAGES = {
+    "Fire": """
+    **🔥 今は「火（胆汁質）」の香りを求めています** 本来の情熱やエネルギーを、少しチャージしたい時期かもしれません。  
     内側の「やる気」に火をつける、以下の香りがおすすめです。  
     **おすすめアロマ:** ローレル、ユーカリ・ラディアタ、オレンジ・スイート
     """,
     "Earth": """
-    **🌏「地（神経質）」の香りを求めています** 今は安定感や現実的な着地点を必要としている時期かもしれません。  
+    **🌏 今は「地（神経質）」の香りを求めています** 少し気が張り詰めていませんか？ 地に足をつけて落ち着きたい時期かもしれません。  
     グラウンディングを助ける、以下の香りがおすすめです。  
     **おすすめアロマ:** ラベンダー・アングスティフォリア、カモマイル・ローマン、イランイラン
     """,
     "Air": """
-    **🌬️「風（多血質）」の香りを求めています** 今は自由な発想やコミュニケーション、軽やかさを必要としている時期かもしれません。  
+    **🌬️ 今は「風（多血質）」の香りを求めています** 考えが煮詰まっていませんか？ 新しい風を入れてリフレッシュしたい時期かもしれません。  
     風通しを良くする、以下の香りがおすすめです。  
     **おすすめアロマ:** ホーウッド、パルマローザ、マジョラム
     """,
     "Water": """
-    **💧「水（リンパ質）」の香りを求めています** 今は癒しや潤い、感情の解放を必要としている時期かもしれません。  
+    **💧 今は「水（リンパ質）」の香りを求めています** 頑張りすぎていませんか？ 感情を解放して、ゆっくり癒やされたい時期かもしれません。  
     心身を潤し流れを良くする、以下の香りがおすすめです。  
     **おすすめアロマ:** レモングラス、リトセア、ユーカリ・レモン、ローズマリー・カンファー
     """
@@ -192,28 +207,23 @@ def main():
                 if element:
                     astro_scores[element] += PLANET_SCORES.get(target_names[i], 0)
 
-            # 2. 香りの計算（優先順位ロジック修正）
+            # 2. 香りの計算
             scent_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
-            min_ranks = {"Fire": 9, "Earth": 9, "Air": 9, "Water": 9} # 各要素内の最高順位（最小値）を記録
+            min_ranks = {"Fire": 9, "Earth": 9, "Air": 9, "Water": 9}
 
             for scent in SCENTS_CONF:
                 rank = scent_ranks[scent["key"]]
                 elem = scent["element"]
-                
-                # 合計スコアを加算
                 scent_scores[elem] += rank
-                
-                # その要素の中で「最も良い順位（最小値）」を記録
                 if rank < min_ranks[elem]:
                     min_ranks[elem] = rank
 
-            # --- 診断ロジックの修正 ---
-            # ルール: 
-            # 1. スコア（順位合計）が小さい方を優先（より好き）
-            # 2. スコアが同じなら、min_rank（個別の最高順位）が小さい方（より上位の香りを含む）を優先
+            # --- 診断ロジック ---
+            # 星：最もスコアが高い要素（性質）
+            max_astro_element = max(astro_scores, key=astro_scores.get)
             
-            # ソートキー: (合計スコア, 最高順位) のタプルで比較。両方とも小さい方が勝ち。
-            target_element = min(scent_scores.keys(), key=lambda k: (scent_scores[k], min_ranks[k]))
+            # 香り：スコアが低く、順位が高い要素（求めているもの）
+            target_scent_element = min(scent_scores.keys(), key=lambda k: (scent_scores[k], min_ranks[k]))
 
             # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
@@ -238,9 +248,14 @@ def main():
                 ])
                 st.dataframe(df_res.set_index("Label"), use_container_width=True)
                 
-                # 診断メッセージ
+                # ★ここがポイント：メッセージを2つ表示
                 st.markdown("### 💡 Navigation Message")
-                st.success(ADVICE_MESSAGES[target_element])
+                
+                # 1. 星の性質（青枠）
+                st.info(ASTRO_MESSAGES[max_astro_element])
+                
+                # 2. 香りの処方箋（緑枠）
+                st.success(SCENT_MESSAGES[target_scent_element])
 
             with col2:
                 st.subheader("バランス比較グラフ")
