@@ -1,22 +1,4 @@
 import streamlit as st
-import sys
-import subprocess
-import time
-
-# --- 🛠 【緊急機能】ライブラリ強制インストール ---
-# requirements.txtが無視されても、ここで強制的にインストールして動かします
-try:
-    import kerykeion
-    import pyswisseph
-except ImportError:
-    st.warning("⚠️ 初回セットアップ中... 必要な機能をインストールしています（約1分）")
-    # 強制インストールを実行
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "kerykeion", "pyswisseph", "plotly", "pandas"])
-    st.success("インストール完了！ 自動的に再起動します...")
-    time.sleep(2)
-    st.rerun()
-
-# --- ここからいつものアプリコード ---
 import pandas as pd
 import plotly.graph_objects as go
 from kerykeion import KrInstance
@@ -56,7 +38,6 @@ def main():
     st.title("Aroma Soul Navigation 🌟")
     st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
-    # --- サイドバー入力 ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -70,7 +51,6 @@ def main():
         
         st.markdown("---")
         st.header("2. 香りのチェック結果")
-        st.write("選んだ香りの本数、または点数を入力")
         scent_fire = st.number_input("火の香り", 0, 10, 0)
         scent_earth = st.number_input("地の香り", 0, 10, 0)
         scent_air = st.number_input("風の香り", 0, 10, 0)
@@ -80,7 +60,6 @@ def main():
 
     if calc_btn:
         try:
-            # 占星術計算
             user = KrInstance(name, b_year, b_month, b_day, b_hour, b_min, city, nation)
             
             target_points = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
@@ -98,7 +77,6 @@ def main():
                     astro_scores[element] += score
                     details.append(f"{planet_name} ({sign}) -> {ELEMENT_JP[element]}: +{score}点")
 
-            # ASC / MC
             asc_sign = user.first_house["sign"]
             mc_sign = user.tenth_house["sign"]
             
@@ -110,7 +88,6 @@ def main():
             astro_scores[mc_elem] += PLANET_SCORES["Mc"]
             details.append(f"MC ({mc_sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
 
-            # 結果表示
             col1, col2 = st.columns([1, 1])
 
             with col1:
@@ -144,7 +121,6 @@ def main():
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # メッセージ
             st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
             st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
@@ -159,7 +135,6 @@ def main():
 
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
-            st.write("都市名のスペルなどを確認してください。")
 
 if __name__ == "__main__":
     main()
