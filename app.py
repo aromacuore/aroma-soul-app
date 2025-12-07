@@ -12,28 +12,33 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
+    # 確実に存在するURL（pbrodリポジトリ）を使用
+    # 3つのファイル（惑星、月、小惑星）すべてを揃えます
     files = {
-        "sepl_18.se1": "https://raw.githubusercontent.com/astrorigin/pyswisseph/master/ephe/sepl_18.se1",
-        "semo_18.se1": "https://raw.githubusercontent.com/astrorigin/pyswisseph/master/ephe/semo_18.se1"
+        "sepl_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/sepl_18.se1",
+        "semo_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/semo_18.se1",
+        "seas_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/seas_18.se1"
     }
     
     for filename, url in files.items():
         if not os.path.exists(filename):
             try:
-                with st.spinner(f'星のデータ({filename})をダウンロード中...（初回のみ）'):
+                with st.spinner(f'データダウンロード中... {filename}'):
                     response = requests.get(url)
                     response.raise_for_status()
                     with open(filename, 'wb') as f:
                         f.write(response.content)
             except Exception as e:
-                st.error(f"データのダウンロードに失敗しました: {e}")
+                st.error(f"ダウンロードエラー ({filename}): {e}")
                 st.stop()
 
-# ダウンロード実行とパス指定
+# 1. ダウンロード実行
 download_ephemeris()
+
+# 2. パス指定
 flatlib.setPath(os.getcwd())
 
-# --- 🌟 47都道府県の座標データ (県庁所在地) ---
+# --- 🌟 47都道府県データ ---
 PREFECTURES = {
     "北海道": (43.06, 141.35), "青森県": (40.82, 140.74), "岩手県": (39.70, 141.15),
     "宮城県": (38.26, 140.87), "秋田県": (39.71, 140.10), "山形県": (38.24, 140.36),
@@ -53,7 +58,7 @@ PREFECTURES = {
     "鹿児島県": (31.56, 130.55), "沖縄県": (26.21, 127.68)
 }
 
-# --- 設定: 4元素と星座の対応 ---
+# --- 🌟 ここから本番アプリ ---
 ELEMENTS = {
     "Fire": ["Aries", "Leo", "Sagittarius"],
     "Earth": ["Taurus", "Virgo", "Capricorn"],
@@ -69,7 +74,6 @@ ELEMENT_JP = {
 }
 COLORS = {'Fire': '#FF6B6B', 'Earth': '#4ECDC4', 'Air': '#A8D8EA', 'Water': '#3C40C6'}
 
-# 香りの定義
 SCENTS_CONF = [
     {"element": "Fire", "name": "🔥 A (胆汁)", "key": "scent_a"},
     {"element": "Fire", "name": "🔥 B (胆汁)", "key": "scent_b"},
@@ -99,7 +103,6 @@ def main():
     st.markdown("### 星（先天的）と 香り（現在）の体質バランス比較")
     st.markdown("「好きな香りは自分から遠く、苦手な香りは自分に近い」という理論に基づく分析です。")
 
-    # --- サイドバー入力 ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -111,7 +114,6 @@ def main():
         b_hour = col_b4.number_input("時", 0, 23, 12)
         b_min = col_b5.number_input("分", 0, 59, 0)
         
-        # 都市選択（47都道府県に変更）
         city_name = st.selectbox("出生地 (都道府県)", list(PREFECTURES.keys()))
         
         st.markdown("---")
@@ -132,18 +134,14 @@ def main():
         st.markdown("---")
         calc_btn = st.button("分析する", type="primary")
 
-    # --- 計算と表示 ---
     if calc_btn:
         try:
-            # 1. 星の計算 (flatlib)
+            # 1. 星の計算
             date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
             time_str = f"{b_hour:02d}:{b_min:02d}"
             date = Datetime(date_str, time_str, '+09:00')
-            
-            # 選択された都道府県の座標を取得
             lat, lon = PREFECTURES[city_name]
             pos = GeoPos(lat, lon)
-            
             chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
@@ -167,7 +165,6 @@ def main():
 
             # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
-            
             col1, col2 = st.columns([1.2, 2])
 
             with col1:
