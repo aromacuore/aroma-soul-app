@@ -73,7 +73,14 @@ ELEMENT_JP = {
     "Air": "風 (多血質)",
     "Water": "水 (リンパ質)"
 }
-COLORS = {'Fire': '#FF6B6B', 'Earth': '#4ECDC4', 'Air': '#A8D8EA', 'Water': '#3C40C6'}
+
+# ★カラー設定を変更しました★
+COLORS = {
+    'Fire': '#FFCA99',  # ペールオレンジ
+    'Earth': '#A4D65E',  # 黄緑
+    'Air': '#FFACC7',   # ピンク
+    'Water': '#87CEEB'  # 水色
+}
 
 SCENTS_CONF = [
     {"element": "Fire", "name": "🔥 A (胆汁)", "key": "scent_a"},
@@ -143,7 +150,7 @@ def main():
             lat, lon = PREFECTURES[city_name]
             pos = GeoPos(lat, lon)
             
-            # hsys='P'を削除（デフォルトを使用）
+            # デフォルト(プラシーダス法)を使用
             chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
             sun_obj = chart.get(const.SUN)
