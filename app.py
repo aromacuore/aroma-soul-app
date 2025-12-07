@@ -1,51 +1,15 @@
 import streamlit as st
-import time
-import os
-import subprocess
-import sys
+import pandas as pd
+import plotly.graph_objects as go
+from kerykeion import KrInstance
+from plotly.subplots import make_subplots
 
-# --- 🚀 完全自動セットアップ機能 ---
-# requirements.txtが読み込まれなくても、ここで強制的にインストールして再起動します
-def install_packages():
-    packages = ["kerykeion", "plotly", "pandas", "pyswisseph"]
-    for package in packages:
-        try:
-            __import__(package)
-        except ImportError:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-    
-    # kerykeionのKrInstanceが読み込めるか最終チェック
-    try:
-        from kerykeion import KrInstance
-        return True
-    except ImportError:
-        return False
-
-# インストールチェック実行
-try:
-    from kerykeion import KrInstance
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    import pandas as pd
-except ImportError:
-    st.warning("⚠️ 初回セットアップ中です...このまま約1〜2分お待ちください。")
-    st.info("必要な機能をインストールしています...")
-    
-    # 強制インストール実行
-    install_packages()
-    
-    st.success("インストール完了！アプリを再起動します...")
-    time.sleep(2)
-    st.rerun()
-
-# --- ここから下がいつものアプリ本体です ---
-
-# 設定: 4元素と星座の対応
+# --- 設定: 4元素と星座の対応 ---
 ELEMENTS = {
-    "Fire": ["Ari", "Leo", "Sag"],  # 火
-    "Earth": ["Tau", "Vir", "Cap"], # 地
-    "Air": ["Gem", "Lib", "Aqr"],   # 風
-    "Water": ["Can", "Sco", "Pis"]  # 水
+    "Fire": ["Ari", "Leo", "Sag"],
+    "Earth": ["Tau", "Vir", "Cap"],
+    "Air": ["Gem", "Lib", "Aqr"],
+    "Water": ["Can", "Sco", "Pis"]
 }
 
 ELEMENT_JP = {
@@ -56,10 +20,10 @@ ELEMENT_JP = {
 }
 
 PLANET_SCORES = {
-    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,    
-    "Mercury": 3, "Venus": 3, "Mars": 3,       
-    "Jupiter": 2, "Saturn": 2,                 
-    "Uranus": 1, "Neptune": 1, "Pluto": 1      
+    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,
+    "Mercury": 3, "Venus": 3, "Mars": 3,
+    "Jupiter": 2, "Saturn": 2,
+    "Uranus": 1, "Neptune": 1, "Pluto": 1
 }
 
 def get_element(sign_abbr):
@@ -74,7 +38,6 @@ def main():
     st.title("Aroma Soul Navigation 🌟")
     st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
-    # --- サイドバー ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -98,7 +61,6 @@ def main():
 
     if calc_btn:
         try:
-            # ネイタルチャート計算
             user = KrInstance(name, b_year, b_month, b_day, b_hour, b_min, city, nation)
             
             target_points = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
@@ -116,7 +78,6 @@ def main():
                     astro_scores[element] += score
                     details.append(f"{planet_name} ({sign}) -> {ELEMENT_JP[element]}: +{score}点")
 
-            # ASC / MC
             asc_sign = user.first_house["sign"]
             mc_sign = user.tenth_house["sign"]
             
@@ -128,7 +89,6 @@ def main():
             astro_scores[mc_elem] += PLANET_SCORES["Mc"]
             details.append(f"MC ({mc_sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
 
-            # 画面表示
             col1, col2 = st.columns([1, 1])
 
             with col1:
@@ -163,8 +123,6 @@ def main():
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # 診断コメント
-            st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
             st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
             
@@ -174,11 +132,11 @@ def main():
                 if max_astro == max_scent:
                     st.write(f"現在選んだ香りも **{ELEMENT_JP[max_scent]}** が多く、本来の資質を強調しています。")
                 else:
-                    st.write(f"星は **{ELEMENT_JP[max_astro]}** ですが、香りは **{ELEMENT_JP[max_scent]}** を求めています。今は {ELEMENT_JP[max_scent]} を補う必要がある時期かもしれません。")
+                    st.write(f"星は **{ELEMENT_JP[max_astro]}** ですが、香りは **{ELEMENT_JP[max_scent]}** を求めています。")
 
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
-            st.write("都市名のスペルなどを確認してください。")
+            st.write("入力データを確認してください。")
 
 if __name__ == "__main__":
     main()
