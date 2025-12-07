@@ -6,7 +6,7 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const
-from flatlib import setPath  # ★ここを追加
+import flatlib  # ★ここを変更しました（安全な読み込み）
 import os
 import requests
 
@@ -34,7 +34,8 @@ def download_ephemeris():
 download_ephemeris()
 
 # 2. ★重要：ダウンロードしたファイルの場所をflatlibに教える
-setPath('.') 
+# エラーが出ないよう、絶対パス（確実な場所）で指定します
+flatlib.setPath(os.getcwd())
 
 # --- 🌟 ここから本番アプリ ---
 
