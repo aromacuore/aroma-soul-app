@@ -2,3 +2,4 @@ streamlit
 flatlib
 plotly
 pandas
+requests
