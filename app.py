@@ -1,42 +1,53 @@
 import streamlit as st
-import sys
+import time
+import os
 import subprocess
+import sys
 
-# --- 【緊急対応】ライブラリを強制的にインストールする魔法のコード ---
-# requirements.txtが読み込まれない場合でも、ここで無理やりインストールします
+# --- 🚀 完全自動セットアップ機能 ---
+# requirements.txtが読み込まれなくても、ここで強制的にインストールして再起動します
+def install_packages():
+    packages = ["kerykeion", "plotly", "pandas", "pyswisseph"]
+    for package in packages:
+        try:
+            __import__(package)
+        except ImportError:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    
+    # kerykeionのKrInstanceが読み込めるか最終チェック
+    try:
+        from kerykeion import KrInstance
+        return True
+    except ImportError:
+        return False
+
+# インストールチェック実行
 try:
-    import kerykeion
-    import plotly
+    from kerykeion import KrInstance
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import pandas as pd
 except ImportError:
-    # 画面にインストール中であることを表示
-    st.warning("初回セットアップ中...（約1分かかります）")
+    st.warning("⚠️ 初回セットアップ中です...このまま約1〜2分お待ちください。")
+    st.info("必要な機能をインストールしています...")
     
-    # インストールコマンドを実行
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "kerykeion", "plotly", "pandas", "pyswisseph"])
+    # 強制インストール実行
+    install_packages()
     
-    # インストール後に再度インポート
-    import kerykeion
-    import plotly
-    
-    # 完了したらリロードを促す
-    st.success("インストール完了！画面右上の「Rerun」を押すか、ページを再読み込みしてください。")
-    st.stop()
+    st.success("インストール完了！アプリを再起動します...")
+    time.sleep(2)
+    st.rerun()
 
-# --- ここから下がいつものアプリのコード ---
-import pandas as pd
-import plotly.graph_objects as go
-from kerykeion import KrInstance
-from plotly.subplots import make_subplots
+# --- ここから下がいつものアプリ本体です ---
 
-# --- 設定: 4元素と星座の対応 ---
+# 設定: 4元素と星座の対応
 ELEMENTS = {
-    "Fire": ["Ari", "Leo", "Sag"],  # 火: 牡羊, 獅子, 射手
-    "Earth": ["Tau", "Vir", "Cap"], # 地: 牡牛, 乙女, 山羊
-    "Air": ["Gem", "Lib", "Aqr"],   # 風: 双子, 天秤, 水瓶
-    "Water": ["Can", "Sco", "Pis"]  # 水: 蟹, 蠍, 魚
+    "Fire": ["Ari", "Leo", "Sag"],  # 火
+    "Earth": ["Tau", "Vir", "Cap"], # 地
+    "Air": ["Gem", "Lib", "Aqr"],   # 風
+    "Water": ["Can", "Sco", "Pis"]  # 水
 }
 
-# 日本語表示用マッピング
 ELEMENT_JP = {
     "Fire": "火 (直感/情熱)",
     "Earth": "地 (感覚/現実)",
@@ -44,7 +55,6 @@ ELEMENT_JP = {
     "Water": "水 (感情/共感)"
 }
 
-# --- 設定: 天体のスコア配分 ---
 PLANET_SCORES = {
     "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,    
     "Mercury": 3, "Venus": 3, "Mars": 3,       
@@ -64,7 +74,7 @@ def main():
     st.title("Aroma Soul Navigation 🌟")
     st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
-    # --- サイドバー: 出生データの入力 ---
+    # --- サイドバー ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -79,22 +89,20 @@ def main():
         st.markdown("---")
         st.header("2. 香りのチェック結果")
         st.write("選んだ香りの本数、または点数を入力してください")
-        scent_fire = st.number_input("火の香り (本数/点)", 0, 10, 0)
-        scent_earth = st.number_input("地の香り (本数/点)", 0, 10, 0)
-        scent_air = st.number_input("風の香り (本数/点)", 0, 10, 0)
-        scent_water = st.number_input("水の香り (本数/点)", 0, 10, 0)
+        scent_fire = st.number_input("火の香り", 0, 10, 0)
+        scent_earth = st.number_input("地の香り", 0, 10, 0)
+        scent_air = st.number_input("風の香り", 0, 10, 0)
+        scent_water = st.number_input("水の香り", 0, 10, 0)
 
         calc_btn = st.button("分析する")
 
     if calc_btn:
         try:
-            # --- ネイタルチャート計算 ---
+            # ネイタルチャート計算
             user = KrInstance(name, b_year, b_month, b_day, b_hour, b_min, city, nation)
             
-            target_points = [
-                "Sun", "Moon", "Mercury", "Venus", "Mars", 
-                "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"
-            ]
+            target_points = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
+                             "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             details = []
@@ -104,7 +112,6 @@ def main():
                 sign = planet_data["sign"]
                 element = get_element(sign)
                 score = PLANET_SCORES.get(planet_name, 0)
-                
                 if element:
                     astro_scores[element] += score
                     details.append(f"{planet_name} ({sign}) -> {ELEMENT_JP[element]}: +{score}点")
@@ -121,13 +128,13 @@ def main():
             astro_scores[mc_elem] += PLANET_SCORES["Mc"]
             details.append(f"MC ({mc_sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
 
-            # --- 画面表示 ---
+            # 画面表示
             col1, col2 = st.columns([1, 1])
 
             with col1:
                 st.subheader(f"{name}様の 天体スコア内訳")
                 st.info(f"出生地: {city}, {nation} / 時間: {b_hour}:{b_min}")
-                with st.expander("詳細な計算内容を見る"):
+                with st.expander("詳細を見る"):
                     for d in details:
                         st.write(d)
                 
@@ -146,19 +153,17 @@ def main():
                 fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]],
                                     subplot_titles=['星のスコア (先天的)', '香りのスコア (現在)'])
 
-                fig.add_trace(go.Pie(labels=labels, values=astro_values, name="Astrology",
-                                     marker_colors=colors, hole=.3), 1, 1)
+                fig.add_trace(go.Pie(labels=labels, values=astro_values, name="Astrology", marker_colors=colors, hole=.3), 1, 1)
                 
                 if sum(scent_values) > 0:
-                    fig.add_trace(go.Pie(labels=labels, values=scent_values, name="Scent",
-                                         marker_colors=colors, hole=.3), 1, 2)
+                    fig.add_trace(go.Pie(labels=labels, values=scent_values, name="Scent", marker_colors=colors, hole=.3), 1, 2)
                 else:
                     st.warning("香りのデータが入力されていません")
 
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # --- 診断コメント ---
+            # 診断コメント
             st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
             st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
@@ -166,7 +171,6 @@ def main():
             if sum(scent_values) > 0:
                 scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
                 max_scent = max(scent_dict, key=scent_dict.get)
-                
                 if max_astro == max_scent:
                     st.write(f"現在選んだ香りも **{ELEMENT_JP[max_scent]}** が多く、本来の資質を強調しています。")
                 else:
