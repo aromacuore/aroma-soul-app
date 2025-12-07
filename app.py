@@ -123,15 +123,18 @@ def main():
 
             st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
-            st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
+            strongest_element = ELEMENT_JP[max_astro]
+            st.success(f"あなたの星の配置は **{strongest_element}** の要素が最も強いです。")
             
             if sum(scent_values) > 0:
                 scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
                 max_scent = max(scent_dict, key=scent_dict.get)
+                strongest_scent = ELEMENT_JP[max_scent]
+                
                 if max_astro == max_scent:
-                    st.write(f"現在選んだ香りも **{ELEMENT_JP[max_scent]}** が多く、本来の資質を強調しています。")
+                    st.write(f"現在選んだ香りも **{strongest_scent}** が多く、本来の資質を強調しています。")
                 else:
-                    st.write(f"星は **{ELEMENT_JP[max_astro]}** ですが、香りは **{ELEMENT_JP[max_scent]}** を求めています。")
+                    st.write(f"星は **{strongest_element}** ですが、香りは **{strongest_scent}** を求めています。")
 
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
