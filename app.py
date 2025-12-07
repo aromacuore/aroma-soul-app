@@ -1,10 +1,39 @@
 import streamlit as st
+import sys
+import subprocess
+import time
+
+# --- 🛠 自己修復機能（絶対に動かすためのコード） ---
+# ライブラリが見つからない場合、その場でインストールを実行します
+try:
+    import kerykeion
+    import plotly
+    import pandas
+    import pyswisseph
+    # 試しに使う
+    from kerykeion import KrInstance
+except ImportError:
+    # 画面に案内を表示
+    placeholder = st.empty()
+    placeholder.warning("⚠️ 初回セットアップ中... 必要な機能をインストールしています（約1分）")
+    
+    # 強制インストール（診断モードで成功したコマンド）
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "kerykeion", "plotly", "pandas", "pyswisseph"])
+        placeholder.success("✅ インストール完了！ 自動的に起動します...")
+        time.sleep(2)
+        st.rerun()
+    except Exception as e:
+        placeholder.error(f"インストールエラー: {e}")
+        st.stop()
+
+# --- 🌟 ここから下が本番のアプリです ---
 import pandas as pd
 import plotly.graph_objects as go
 from kerykeion import KrInstance
 from plotly.subplots import make_subplots
 
-# --- 設定: 4元素と星座の対応 ---
+# 設定
 ELEMENTS = {
     "Fire": ["Ari", "Leo", "Sag"],
     "Earth": ["Tau", "Vir", "Cap"],
@@ -20,10 +49,10 @@ ELEMENT_JP = {
 }
 
 PLANET_SCORES = {
-    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,
-    "Mercury": 3, "Venus": 3, "Mars": 3,
-    "Jupiter": 2, "Saturn": 2,
-    "Uranus": 1, "Neptune": 1, "Pluto": 1
+    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,    
+    "Mercury": 3, "Venus": 3, "Mars": 3,       
+    "Jupiter": 2, "Saturn": 2,                 
+    "Uranus": 1, "Neptune": 1, "Pluto": 1      
 }
 
 def get_element(sign_abbr):
@@ -61,7 +90,6 @@ def main():
 
     if calc_btn:
         try:
-            # 1. 占星術計算
             user = KrInstance(name, b_year, b_month, b_day, b_hour, b_min, city, nation)
             
             target_points = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
@@ -79,7 +107,6 @@ def main():
                     astro_scores[element] += score
                     details.append(f"{planet_name} ({sign}) -> {ELEMENT_JP[element]}: +{score}点")
 
-            # ASC / MC
             asc_sign = user.first_house["sign"]
             mc_sign = user.tenth_house["sign"]
             
@@ -91,7 +118,7 @@ def main():
             astro_scores[mc_elem] += PLANET_SCORES["Mc"]
             details.append(f"MC ({mc_sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
 
-            # 2. 表示
+            # 表示
             col1, col2 = st.columns([1, 1])
 
             with col1:
@@ -125,7 +152,7 @@ def main():
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # 3. メッセージ
+            # メッセージ
             max_astro = max(astro_scores, key=astro_scores.get)
             strongest_element = ELEMENT_JP[max_astro]
             st.success(f"あなたの星の配置は **{strongest_element}** の要素が最も強いです。")
@@ -142,6 +169,7 @@ def main():
 
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
+            st.write("入力データを確認してください。")
 
 if __name__ == "__main__":
     main()
