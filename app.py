@@ -82,27 +82,27 @@ COLORS = {
     'Water': '#87CEEB'  # 水色
 }
 
-# 診断メッセージ
+# 診断メッセージ（修正済み）
 ADVICE_MESSAGES = {
     "Fire": """
     **🔥「火（胆汁質）」の香りを求めています** 今は直感や情熱、エネルギーを必要としている時期かもしれません。  
-    考えすぎるよりも、まずは体を動かしたり、温かい食事をとって、内側の「やる気」に火をつけましょう。  
-    おすすめアロマ: ローズマリー、レモン、ジンジャーなど
+    内側の「やる気」に火をつける、以下の香りがおすすめです。  
+    **おすすめアロマ:** ローレル、ユーカリ・ラディアタ、オレンジ・スイート
     """,
     "Earth": """
     **🌏「地（神経質）」の香りを求めています** 今は安定感や現実的な着地点を必要としている時期かもしれません。  
-    少し気が張り詰めているかも？ 自然に触れたり、質の良い睡眠をとって「グラウンディング」を意識しましょう。  
-    おすすめアロマ: パチュリ、ベチバー、シダーウッドなど
+    グラウンディングを助ける、以下の香りがおすすめです。  
+    **おすすめアロマ:** ラベンダー・アングスティフォリア、カモマイル・ローマン、イランイラン
     """,
     "Air": """
     **🌬️「風（多血質）」の香りを求めています** 今は自由な発想やコミュニケーション、軽やかさを必要としている時期かもしれません。  
-    一つの場所に留まらず、窓を開けて換気をしたり、深呼吸をして気分転換をしましょう。  
-    おすすめアロマ: ペパーミント、ユーカリ、ティートゥリーなど
+    風通しを良くする、以下の香りがおすすめです。  
+    **おすすめアロマ:** ホーウッド、パルマローザ、マジョラム
     """,
     "Water": """
     **💧「水（リンパ質）」の香りを求めています** 今は癒しや潤い、感情の解放を必要としている時期かもしれません。  
-    頑張りすぎていませんか？ お風呂にゆっくり浸かったり、自分の感情に正直になって、心身を潤しましょう。  
-    おすすめアロマ: ラベンダー、ゼラニウム、イランイランなど
+    心身を潤し流れを良くする、以下の香りがおすすめです。  
+    **おすすめアロマ:** レモングラス、リトセア、ユーカリ・レモン、ローズマリー・カンファー
     """
 }
 
@@ -192,17 +192,34 @@ def main():
                 if element:
                     astro_scores[element] += PLANET_SCORES.get(target_names[i], 0)
 
+            # 2. 香りの計算（優先順位ロジック修正）
             scent_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
-            for scent in SCENTS_CONF:
-                scent_scores[scent["element"]] += scent_ranks[scent["key"]]
+            min_ranks = {"Fire": 9, "Earth": 9, "Air": 9, "Water": 9} # 各要素内の最高順位（最小値）を記録
 
-            # 診断ロジック（最も順位が低い＝好きな＝スコアが最小のエレメントを探す）
-            min_scent_element = min(scent_scores, key=scent_scores.get)
+            for scent in SCENTS_CONF:
+                rank = scent_ranks[scent["key"]]
+                elem = scent["element"]
+                
+                # 合計スコアを加算
+                scent_scores[elem] += rank
+                
+                # その要素の中で「最も良い順位（最小値）」を記録
+                if rank < min_ranks[elem]:
+                    min_ranks[elem] = rank
+
+            # --- 診断ロジックの修正 ---
+            # ルール: 
+            # 1. スコア（順位合計）が小さい方を優先（より好き）
+            # 2. スコアが同じなら、min_rank（個別の最高順位）が小さい方（より上位の香りを含む）を優先
+            
+            # ソートキー: (合計スコア, 最高順位) のタプルで比較。両方とも小さい方が勝ち。
+            target_element = min(scent_scores.keys(), key=lambda k: (scent_scores[k], min_ranks[k]))
 
             # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
             
             st.markdown("### 🪐 基本的な星の配置 (Big 3)")
+            st.caption("※ ハウスシステム: プラシーダス法 (Placidus)")
             c1, c2, c3 = st.columns(3)
             c1.metric("☀️ 太陽星座 (本質)", f"{SIGN_JP[sun_obj.sign]}")
             c2.metric("🌙 月星座 (内面)", f"{SIGN_JP[moon_obj.sign]}")
@@ -223,7 +240,7 @@ def main():
                 
                 # 診断メッセージ
                 st.markdown("### 💡 Navigation Message")
-                st.success(ADVICE_MESSAGES[min_scent_element])
+                st.success(ADVICE_MESSAGES[target_element])
 
             with col2:
                 st.subheader("バランス比較グラフ")
