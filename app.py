@@ -1,4 +1,4 @@
-import streamlit as st
+iimport streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -12,7 +12,6 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
-    # 公式リポジトリ(aloistr)のURLを使用
     files = {
         "sepl_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sepl_18.se1",
         "semo_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/semo_18.se1",
@@ -74,12 +73,36 @@ ELEMENT_JP = {
     "Water": "水 (リンパ質)"
 }
 
-# ★カラー設定を変更しました★
+# カラー設定
 COLORS = {
     'Fire': '#FFCA99',  # ペールオレンジ
-    'Earth': '#A4D65E',  # 黄緑
+    'Earth': '#A4D65E', # 黄緑
     'Air': '#FFACC7',   # ピンク
     'Water': '#87CEEB'  # 水色
+}
+
+# ★追加：診断メッセージ（今求めている要素へのアドバイス）
+ADVICE_MESSAGES = {
+    "Fire": """
+    **🔥「火（胆汁質）」の香りを求めています** 今は直感や情熱、エネルギーを必要としている時期かもしれません。  
+    考えすぎるよりも、まずは体を動かしたり、温かい食事をとって、内側の「やる気」に火をつけましょう。  
+    アロマ: ローズマリー、レモンなど、スパイシーで温かみのある香りがおすすめです。
+    """,
+    "Earth": """
+    **🌏「地（神経質）」の香りを求めています** 今は安定感や現実的な着地点を必要としている時期かもしれません。  
+    少し気が張り詰めているかも？ 自然に触れたり、質の良い睡眠をとって「グラウンディング」を意識しましょう。  
+    アロマ: パチュリ、ベチバーなど、土の香りやウッディ系がおすすめです。
+    """,
+    "Air": """
+    **🌬️「風（多血質）」の香りを求めています** 今は自由な発想やコミュニケーション、軽やかさを必要としている時期かもしれません。  
+    一つの場所に留まらず、窓を開けて換気をしたり、深呼吸をして気分転換をしましょう。  
+    アロマ: ペパーミント、ユーカリなど、爽やかで風通しの良い香りがおすすめです。
+    """,
+    "Water": """
+    **💧「水（リンパ質）」の香りを求めています** 今は癒しや潤い、感情の解放を必要としている時期かもしれません。  
+    頑張りすぎていませんか？ お風呂にゆっくり浸かったり、自分の感情に正直になって、心身を潤しましょう。  
+    アロマ: ラベンダー、ゼラニウムなど、フローラルで優しい香りがおすすめです。
+    """
 }
 
 SCENTS_CONF = [
@@ -143,14 +166,12 @@ def main():
 
     if calc_btn:
         try:
-            # 1. 星の計算 (デフォルトでプラシーダス法が適用されます)
+            # 1. 星の計算
             date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
             time_str = f"{b_hour:02d}:{b_min:02d}"
             date = Datetime(date_str, time_str, '+09:00')
             lat, lon = PREFECTURES[city_name]
             pos = GeoPos(lat, lon)
-            
-            # デフォルト(プラシーダス法)を使用
             chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
             sun_obj = chart.get(const.SUN)
@@ -174,11 +195,15 @@ def main():
             for scent in SCENTS_CONF:
                 scent_scores[scent["element"]] += scent_ranks[scent["key"]]
 
+            # --- 診断ロジック ---
+            # 香りのスコアが「低い」＝順位が上（1位に近い）＝「求めている要素」
+            # 最も低いスコアの要素を探す
+            min_scent_element = min(scent_scores, key=scent_scores.get)
+
             # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
             
             st.markdown("### 🪐 基本的な星の配置 (Big 3)")
-            st.caption("※ ハウスシステム: プラシーダス法 (Placidus)")
             c1, c2, c3 = st.columns(3)
             c1.metric("☀️ 太陽星座 (本質)", f"{SIGN_JP[sun_obj.sign]}")
             c2.metric("🌙 月星座 (内面)", f"{SIGN_JP[moon_obj.sign]}")
@@ -196,6 +221,10 @@ def main():
                     {"Element": "Water", "Label": ELEMENT_JP["Water"], "星スコア": astro_scores["Water"], "香り順位合計": scent_scores["Water"]},
                 ])
                 st.dataframe(df_res.set_index("Label"), use_container_width=True)
+                
+                # ★ここに追加：診断メッセージの表示
+                st.markdown("### 💡 Navigation Message")
+                st.success(ADVICE_MESSAGES[min_scent_element])
 
             with col2:
                 st.subheader("バランス比較グラフ")
