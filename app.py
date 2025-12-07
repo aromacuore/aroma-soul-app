@@ -12,6 +12,7 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
+    # 公式リポジトリ(aloistr)のURLを使用
     files = {
         "sepl_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sepl_18.se1",
         "semo_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/semo_18.se1",
@@ -34,14 +35,12 @@ download_ephemeris()
 swe.set_ephe_path(os.getcwd())
 
 # --- 🌟 辞書データ ---
-# 12星座の日本語訳
 SIGN_JP = {
     "Aries": "牡羊座", "Taurus": "牡牛座", "Gemini": "双子座", "Cancer": "蟹座",
     "Leo": "獅子座", "Virgo": "乙女座", "Libra": "天秤座", "Scorpio": "蠍座",
     "Sagittarius": "射手座", "Capricorn": "山羊座", "Aquarius": "水瓶座", "Pisces": "魚座"
 }
 
-# 47都道府県データ
 PREFECTURES = {
     "北海道": (43.06, 141.35), "青森県": (40.82, 140.74), "岩手県": (39.70, 141.15),
     "宮城県": (38.26, 140.87), "秋田県": (39.71, 140.10), "山形県": (38.24, 140.36),
@@ -61,7 +60,6 @@ PREFECTURES = {
     "鹿児島県": (31.56, 130.55), "沖縄県": (26.21, 127.68)
 }
 
-# 4元素設定
 ELEMENTS = {
     "Fire": ["Aries", "Leo", "Sagittarius"],
     "Earth": ["Taurus", "Virgo", "Capricorn"],
@@ -138,20 +136,20 @@ def main():
 
     if calc_btn:
         try:
-            # 1. 星の計算
+            # 1. 星の計算 (デフォルトでプラシーダス法が適用されます)
             date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
             time_str = f"{b_hour:02d}:{b_min:02d}"
             date = Datetime(date_str, time_str, '+09:00')
             lat, lon = PREFECTURES[city_name]
             pos = GeoPos(lat, lon)
-            chart = Chart(date, pos, hsys='P', IDs=const.LIST_OBJECTS)
+            
+            # hsys='P'を削除（デフォルトを使用）
+            chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
-            # --- 主要3天体（Big3）の取得 ---
             sun_obj = chart.get(const.SUN)
             moon_obj = chart.get(const.MOON)
             asc_obj = chart.get(const.ASC)
 
-            # --- スコア計算 ---
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             targets = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, 
                        const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
@@ -165,16 +163,15 @@ def main():
                 if element:
                     astro_scores[element] += PLANET_SCORES.get(target_names[i], 0)
 
-            # --- 香りスコア計算 ---
             scent_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             for scent in SCENTS_CONF:
                 scent_scores[scent["element"]] += scent_ranks[scent["key"]]
 
             # --- 結果表示 ---
             st.header(f"📊 {name}様の分析結果")
-
-            # ★ここに追加：Big3の表示エリア
+            
             st.markdown("### 🪐 基本的な星の配置 (Big 3)")
+            st.caption("※ ハウスシステム: プラシーダス法 (Placidus)")
             c1, c2, c3 = st.columns(3)
             c1.metric("☀️ 太陽星座 (本質)", f"{SIGN_JP[sun_obj.sign]}")
             c2.metric("🌙 月星座 (内面)", f"{SIGN_JP[moon_obj.sign]}")
