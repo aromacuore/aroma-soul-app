@@ -1,30 +1,33 @@
 import streamlit as st
 import sys
 import subprocess
+import time
 
-# --- 📦 自動インストール機能（エラー防止） ---
+# --- 🚀 ノンストップ・インストール機能 ---
+# ライブラリがない場合、裏側でインストールして、そのまま強引に進みます。
+# 再読み込みボタンは押しません。
 try:
+    import kerykeion
     import plotly
-    import plotly.graph_objects as go
+    import pandas
     from kerykeion import KrInstance
-    import pandas as pd
 except ImportError:
-    st.title("⚙️ 初回セットアップ中...")
-    st.warning("必要な機能をインストールしています。1分ほどお待ちください。")
+    # 画面に少しだけ待ち時間を表示
+    placeholder = st.empty()
+    placeholder.warning("⚠️ 初回準備中... 1分ほどそのままお待ちください（自動で進みます）")
     
-    # 必要なものをインストール
-    packages = ["plotly", "kerykeion", "pandas", "pyswisseph"]
-    for package in packages:
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        except Exception:
-            pass
-            
-    st.success("✅ インストール完了！")
-    st.info("【重要】この画面を、ブラウザの更新ボタンで「再読み込み」してください。")
-    st.stop()
+    # 強制インストール実行
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "kerykeion", "plotly", "pandas", "pyswisseph"])
+    
+    # インストールが終わったら表示を消す
+    placeholder.success("準備完了！起動します...")
+    time.sleep(1)
+    placeholder.empty()
 
-# --- 🌟 本番アプリコード ---
+# --- 🌟 ここからアプリ本編 ---
+import pandas as pd
+import plotly.graph_objects as go
+from kerykeion import KrInstance
 from plotly.subplots import make_subplots
 
 # 設定
@@ -146,18 +149,15 @@ def main():
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # メッセージ（修正済み）
+            # メッセージ
             st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
-            
-            # エラーが出にくい書き方に変更
             strongest_element = ELEMENT_JP[max_astro]
             st.success(f"あなたの星の配置は **{strongest_element}** の要素が最も強いです。")
             
             if sum(scent_values) > 0:
                 scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
                 max_scent = max(scent_dict, key=scent_dict.get)
-                
                 strongest_scent = ELEMENT_JP[max_scent]
                 
                 if max_astro == max_scent:
