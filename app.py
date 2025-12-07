@@ -1,10 +1,65 @@
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-from kerykeion import KrInstance
-from plotly.subplots import make_subplots
+import sys
+import subprocess
+import os
+import time
 
-# --- 設定: 4元素と星座の対応 ---
+# --- 🕵️‍♀️ 究極の診断＆修復モード ---
+
+def install_and_retry():
+    """ライブラリがない場合に強制インストールする関数"""
+    st.title("⚙️ 初回セットアップ中...")
+    st.info("必要な機能をインストールしています。このまま約1〜2分お待ちください。")
+    
+    # プログレスバー表示
+    my_bar = st.progress(0)
+    
+    try:
+        # 1. pipのアップグレード
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
+        my_bar.progress(20)
+        
+        # 2. 必要なライブラリのインストール
+        packages = ["plotly", "pandas", "pyswisseph", "kerykeion"]
+        for i, pkg in enumerate(packages):
+            subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
+            my_bar.progress(20 + (i+1) * 20)
+            
+        st.success("✅ インストール完了！ 自動的に起動します...")
+        time.sleep(1)
+        st.rerun()
+        
+    except subprocess.CalledProcessError as e:
+        # インストールに失敗した場合（Pythonのバージョン問題など）
+        st.error("❌ インストールに失敗しました")
+        st.error(f"エラー内容: {e}")
+        
+        # Pythonバージョンのチェック
+        ver = sys.version_info
+        st.warning(f"現在のPythonバージョン: {ver.major}.{ver.minor}")
+        
+        if ver.minor >= 12:
+            st.error("⚠️ 原因特定: Pythonのバージョンが新しすぎます（3.12以上はエラーになります）。")
+            st.info("""
+            **【解決策】**
+            GitHubに `runtime.txt` というファイルを作り、中身に `python-3.9` とだけ書いて保存してください。
+            その後、アプリを作り直してください。
+            """)
+        st.stop()
+
+# --- ライブラリの読み込みチェック ---
+try:
+    import plotly.graph_objects as go
+    from kerykeion import KrInstance
+    import pandas as pd
+    from plotly.subplots import make_subplots
+except ImportError:
+    # 読み込めない場合はインストールを実行
+    install_and_retry()
+
+# --- 🌟 ここから下が本番アプリ（インストール成功時のみ動く） ---
+
+# 設定: 4元素と星座の対応
 ELEMENTS = {
     "Fire": ["Ari", "Leo", "Sag"],
     "Earth": ["Tau", "Vir", "Cap"],
@@ -119,22 +174,4 @@ def main():
                     st.warning("香りのデータが未入力です")
 
                 fig.update_layout(showlegend=True)
-                st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("### 💎 Navigation Message")
-            max_astro = max(astro_scores, key=astro_scores.get)
-            st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
-            
-            if sum(scent_values) > 0:
-                scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
-                max_scent = max(scent_dict, key=scent_dict.get)
-                if max_astro == max_scent:
-                    st.write(f"現在選んだ香りも **{ELEMENT_JP[max_scent]}** が多く、本来の資質を強調しています。")
-                else:
-                    st.write(f"星は **{ELEMENT_JP[max_astro]}** ですが、香りは **{ELEMENT_JP[max_scent]}** を求めています。")
-
-        except Exception as e:
-            st.error(f"エラーが発生しました: {e}")
-
-if __name__ == "__main__":
-    main()
+                st.plotly_chart
