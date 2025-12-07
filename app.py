@@ -34,11 +34,10 @@ def get_element(sign_abbr):
 
 def main():
     st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
-    
+
     st.title("Aroma Soul Navigation 🌟")
     st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
-    # サイドバー
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -49,7 +48,7 @@ def main():
         b_min = st.number_input("分", 0, 59, 0)
         city = st.text_input("出生都市 (ローマ字)", "Tokyo")
         nation = st.text_input("国コード (JP, US等)", "JP")
-        
+
         st.markdown("---")
         st.header("2. 香りのチェック結果")
         scent_fire = st.number_input("火の香り", 0, 10, 0)
@@ -63,7 +62,7 @@ def main():
         try:
             # 1. 占星術計算
             user = KrInstance(name, b_year, b_month, b_day, b_hour, b_min, city, nation)
-            
+
             target_points = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
                              "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 
@@ -82,7 +81,7 @@ def main():
             # ASC / MC
             asc_sign = user.first_house["sign"]
             mc_sign = user.tenth_house["sign"]
-            
+
             asc_elem = get_element(asc_sign)
             astro_scores[asc_elem] += PLANET_SCORES["Asc"]
             details.append(f"ASC ({asc_sign}) -> {ELEMENT_JP[asc_elem]}: +{PLANET_SCORES['Asc']}点")
@@ -100,7 +99,7 @@ def main():
                 with st.expander("詳細な計算内容を見る"):
                     for d in details:
                         st.write(d)
-                
+
                 df_astro = pd.DataFrame(list(astro_scores.items()), columns=["Element", "Score"])
                 df_astro["Label"] = df_astro["Element"].map(ELEMENT_JP)
                 st.dataframe(df_astro.set_index("Label"))
@@ -116,7 +115,7 @@ def main():
                                     subplot_titles=['星のスコア (先天的)', '香りのスコア (現在)'])
 
                 fig.add_trace(go.Pie(labels=labels, values=astro_values, name="Astrology", marker_colors=colors, hole=.3), 1, 1)
-                
+
                 if sum(scent_values) > 0:
                     fig.add_trace(go.Pie(labels=labels, values=scent_values, name="Scent", marker_colors=colors, hole=.3), 1, 2)
                 else:
@@ -129,12 +128,12 @@ def main():
             max_astro = max(astro_scores, key=astro_scores.get)
             strongest_element = ELEMENT_JP[max_astro]
             st.success(f"あなたの星の配置は **{strongest_element}** の要素が最も強いです。")
-            
+
             if sum(scent_values) > 0:
                 scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
                 max_scent = max(scent_dict, key=scent_dict.get)
                 strongest_scent = ELEMENT_JP[max_scent]
-                
+
                 if max_astro == max_scent:
                     st.write(f"現在選んだ香りも **{strongest_scent}** が多く、本来の資質を強調しています。")
                 else:
