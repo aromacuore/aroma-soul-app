@@ -1,10 +1,44 @@
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-from kerykeion import KrInstance
+import sys
+import subprocess
+
+# --- 📦 安全な自動インストール機能 ---
+# エラーが出ても焦らず、必要な道具を揃えてから「止まり」ます。
+try:
+    # まず、必要な道具があるか確認します
+    import plotly
+    import plotly.graph_objects as go
+    from kerykeion import KrInstance
+    import pandas as pd
+except ImportError:
+    # 道具がない場合、ここが動きます
+    st.title("⚙️ 初回セットアップ中...")
+    st.warning("アプリに必要な機能をインストールしています。1分ほどお待ちください。")
+    
+    # 必要なものを順番にインストール
+    packages = ["plotly", "kerykeion", "pandas", "pyswisseph"]
+    
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    for i, package in enumerate(packages):
+        status_text.text(f"インストール中: {package} ...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        except Exception:
+            pass # エラーが出ても次へ進む
+        progress_bar.progress((i + 1) / len(packages))
+        
+    st.success("✅ インストールが完了しました！")
+    st.info("【重要】この画面を、ブラウザの更新ボタンで「再読み込み」してください。そうするとアプリが始まります。")
+    
+    # ここでプログラムを完全に止めます（無限ループ防止）
+    st.stop()
+
+# --- 🌟 ここから下が本番のアプリコードです ---
 from plotly.subplots import make_subplots
 
-# --- 設定: 4元素と星座の対応 ---
+# 設定: 4元素と星座の対応
 ELEMENTS = {
     "Fire": ["Ari", "Leo", "Sag"],
     "Earth": ["Tau", "Vir", "Cap"],
@@ -20,10 +54,10 @@ ELEMENT_JP = {
 }
 
 PLANET_SCORES = {
-    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,
-    "Mercury": 3, "Venus": 3, "Mars": 3,
-    "Jupiter": 2, "Saturn": 2,
-    "Uranus": 1, "Neptune": 1, "Pluto": 1
+    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,    
+    "Mercury": 3, "Venus": 3, "Mars": 3,       
+    "Jupiter": 2, "Saturn": 2,                 
+    "Uranus": 1, "Neptune": 1, "Pluto": 1      
 }
 
 def get_element(sign_abbr):
@@ -38,6 +72,7 @@ def main():
     st.title("Aroma Soul Navigation 🌟")
     st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
+    # --- サイドバー ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
@@ -51,6 +86,7 @@ def main():
         
         st.markdown("---")
         st.header("2. 香りのチェック結果")
+        st.write("選んだ香りの本数、または点数を入力")
         scent_fire = st.number_input("火の香り", 0, 10, 0)
         scent_earth = st.number_input("地の香り", 0, 10, 0)
         scent_air = st.number_input("風の香り", 0, 10, 0)
@@ -88,6 +124,7 @@ def main():
             astro_scores[mc_elem] += PLANET_SCORES["Mc"]
             details.append(f"MC ({mc_sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
 
+            # 結果表示
             col1, col2 = st.columns([1, 1])
 
             with col1:
@@ -121,20 +158,7 @@ def main():
                 fig.update_layout(showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
 
+            # メッセージ
             st.markdown("### 💎 Navigation Message")
             max_astro = max(astro_scores, key=astro_scores.get)
-            st.success(f"あなたの星の配置は **{ELEMENT_JP[max_astro]}** の要素が最も強いです。")
-            
-            if sum(scent_values) > 0:
-                scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
-                max_scent = max(scent_dict, key=scent_dict.get)
-                if max_astro == max_scent:
-                    st.write(f"現在選んだ香りも **{ELEMENT_JP[max_scent]}** が多く、本来の資質を強調しています。")
-                else:
-                    st.write(f"星は **{ELEMENT_JP[max_astro]}** ですが、香りは **{ELEMENT_JP[max_scent]}** を求めています。")
-
-        except Exception as e:
-            st.error(f"エラーが発生しました: {e}")
-
-if __name__ == "__main__":
-    main()
+            st.success(f"あなたの星の配置は **{ELEMENT_JP
