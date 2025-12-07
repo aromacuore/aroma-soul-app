@@ -12,24 +12,23 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
-    # 確実に存在するURL（pbrodリポジトリ）を使用
-    # 3つのファイル（惑星、月、小惑星）すべてを揃えます
+    # 確実に存在するURL（kerykeionのリポジトリ）を使用します
     files = {
-        "sepl_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/sepl_18.se1",
-        "semo_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/semo_18.se1",
-        "seas_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/seas_18.se1"
+        "sepl_18.se1": "https://raw.githubusercontent.com/g-battaglia/kerykeion/master/kerykeion/sweph/sepl_18.se1",
+        "semo_18.se1": "https://raw.githubusercontent.com/g-battaglia/kerykeion/master/kerykeion/sweph/semo_18.se1",
+        "seas_18.se1": "https://raw.githubusercontent.com/g-battaglia/kerykeion/master/kerykeion/sweph/seas_18.se1"
     }
     
     for filename, url in files.items():
         if not os.path.exists(filename):
             try:
-                with st.spinner(f'データダウンロード中... {filename}'):
+                with st.spinner(f'星のデータ({filename})をダウンロード中...'):
                     response = requests.get(url)
                     response.raise_for_status()
                     with open(filename, 'wb') as f:
                         f.write(response.content)
             except Exception as e:
-                st.error(f"ダウンロードエラー ({filename}): {e}")
+                st.error(f"ダウンロードエラー: {e}")
                 st.stop()
 
 # 1. ダウンロード実行
@@ -136,13 +135,15 @@ def main():
 
     if calc_btn:
         try:
-            # 1. 星の計算
+            # 1. 星の計算 (flatlib)
             date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
             time_str = f"{b_hour:02d}:{b_min:02d}"
             date = Datetime(date_str, time_str, '+09:00')
             lat, lon = PREFECTURES[city_name]
             pos = GeoPos(lat, lon)
-            chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
+            
+            # ★ここでプラシーダス法 ('P') を明示的に指定します
+            chart = Chart(date, pos, hsys='P', IDs=const.LIST_OBJECTS)
 
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
             
