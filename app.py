@@ -1,4 +1,4 @@
-iimport streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -12,6 +12,7 @@ import requests
 
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
+    # 公式リポジトリ(aloistr)のURLを使用
     files = {
         "sepl_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sepl_18.se1",
         "semo_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/semo_18.se1",
@@ -81,27 +82,27 @@ COLORS = {
     'Water': '#87CEEB'  # 水色
 }
 
-# ★追加：診断メッセージ（今求めている要素へのアドバイス）
+# 診断メッセージ
 ADVICE_MESSAGES = {
     "Fire": """
     **🔥「火（胆汁質）」の香りを求めています** 今は直感や情熱、エネルギーを必要としている時期かもしれません。  
     考えすぎるよりも、まずは体を動かしたり、温かい食事をとって、内側の「やる気」に火をつけましょう。  
-    アロマ: ローズマリー、レモンなど、スパイシーで温かみのある香りがおすすめです。
+    おすすめアロマ: ローズマリー、レモン、ジンジャーなど
     """,
     "Earth": """
     **🌏「地（神経質）」の香りを求めています** 今は安定感や現実的な着地点を必要としている時期かもしれません。  
     少し気が張り詰めているかも？ 自然に触れたり、質の良い睡眠をとって「グラウンディング」を意識しましょう。  
-    アロマ: パチュリ、ベチバーなど、土の香りやウッディ系がおすすめです。
+    おすすめアロマ: パチュリ、ベチバー、シダーウッドなど
     """,
     "Air": """
     **🌬️「風（多血質）」の香りを求めています** 今は自由な発想やコミュニケーション、軽やかさを必要としている時期かもしれません。  
     一つの場所に留まらず、窓を開けて換気をしたり、深呼吸をして気分転換をしましょう。  
-    アロマ: ペパーミント、ユーカリなど、爽やかで風通しの良い香りがおすすめです。
+    おすすめアロマ: ペパーミント、ユーカリ、ティートゥリーなど
     """,
     "Water": """
     **💧「水（リンパ質）」の香りを求めています** 今は癒しや潤い、感情の解放を必要としている時期かもしれません。  
     頑張りすぎていませんか？ お風呂にゆっくり浸かったり、自分の感情に正直になって、心身を潤しましょう。  
-    アロマ: ラベンダー、ゼラニウムなど、フローラルで優しい香りがおすすめです。
+    おすすめアロマ: ラベンダー、ゼラニウム、イランイランなど
     """
 }
 
@@ -195,9 +196,7 @@ def main():
             for scent in SCENTS_CONF:
                 scent_scores[scent["element"]] += scent_ranks[scent["key"]]
 
-            # --- 診断ロジック ---
-            # 香りのスコアが「低い」＝順位が上（1位に近い）＝「求めている要素」
-            # 最も低いスコアの要素を探す
+            # 診断ロジック（最も順位が低い＝好きな＝スコアが最小のエレメントを探す）
             min_scent_element = min(scent_scores, key=scent_scores.get)
 
             # --- 結果表示 ---
@@ -222,7 +221,7 @@ def main():
                 ])
                 st.dataframe(df_res.set_index("Label"), use_container_width=True)
                 
-                # ★ここに追加：診断メッセージの表示
+                # 診断メッセージ
                 st.markdown("### 💡 Navigation Message")
                 st.success(ADVICE_MESSAGES[min_scent_element])
 
