@@ -6,8 +6,30 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const
+import os
+import requests
 
-# --- 設定: 4元素と星座の対応 (flatlib用) ---
+# --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード機能 ---
+def download_ephemeris():
+    files = {
+        "seas_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/seas_18.se1",
+        "semo_18.se1": "https://github.com/pbrod/swisseph/raw/master/ephe/semo_18.se1"
+    }
+    for filename, url in files.items():
+        if not os.path.exists(filename):
+            try:
+                st.info(f"星のデータを準備中... ({filename})")
+                response = requests.get(url)
+                with open(filename, 'wb') as f:
+                    f.write(response.content)
+            except Exception as e:
+                st.error(f"データの準備に失敗しました: {e}")
+
+download_ephemeris()
+
+# --- 🌟 ここから本番アプリ ---
+
+# 設定: 4元素と星座の対応
 ELEMENTS = {
     "Fire": ["Aries", "Leo", "Sagittarius"],
     "Earth": ["Taurus", "Virgo", "Capricorn"],
@@ -15,14 +37,27 @@ ELEMENTS = {
     "Water": ["Cancer", "Scorpio", "Pisces"]
 }
 
+# 表示ラベル設定
 ELEMENT_JP = {
-    "Fire": "火 (直感/情熱)",
-    "Earth": "地 (感覚/現実)",
-    "Air": "風 (思考/情報)",
-    "Water": "水 (感情/共感)"
+    "Fire": "火 (胆汁質)",
+    "Earth": "地 (神経質)",
+    "Air": "風 (多血質)",
+    "Water": "水 (リンパ質)"
 }
+COLORS = {'Fire': '#FF6B6B', 'Earth': '#4ECDC4', 'Air': '#A8D8EA', 'Water': '#3C40C6'}
 
-# 天体のスコア配分
+# 香りの定義（名前と対応するキー）
+SCENTS_CONF = [
+    {"element": "Fire", "name": "🔥 A (胆汁)", "key": "scent_a"},
+    {"element": "Fire", "name": "🔥 B (胆汁)", "key": "scent_b"},
+    {"element": "Air", "name": "🌬️ C (多血)", "key": "scent_c"},
+    {"element": "Air", "name": "🌬️ D (多血)", "key": "scent_d"},
+    {"element": "Earth", "name": "🌏 E (神経)", "key": "scent_e"},
+    {"element": "Earth", "name": "🌏 F (神経)", "key": "scent_f"},
+    {"element": "Water", "name": "💧 G (リンパ)", "key": "scent_g"},
+    {"element": "Water", "name": "💧 H (リンパ)", "key": "scent_h"},
+]
+
 PLANET_SCORES = {
     "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,
     "Mercury": 3, "Venus": 3, "Mars": 3,
@@ -30,146 +65,130 @@ PLANET_SCORES = {
     "Uranus": 1, "Neptune": 1, "Pluto": 1
 }
 
-# 主要都市の緯度経度辞書（簡易版）
 CITY_COORDS = {
-    "Tokyo": (35.68, 139.76),
-    "Osaka": (34.69, 135.50),
-    "Nagoya": (35.18, 136.90),
-    "Sapporo": (43.06, 141.35),
-    "Fukuoka": (33.59, 130.40),
-    "Naha": (26.21, 127.68),
-    "Sendai": (38.26, 140.86),
-    "Hiroshima": (34.38, 132.45),
-    "Kanazawa": (36.56, 136.65)
+    "Tokyo": (35.68, 139.76), "Osaka": (34.69, 135.50), "Nagoya": (35.18, 136.90),
+    "Sapporo": (43.06, 141.35), "Fukuoka": (33.59, 130.40), "Naha": (26.21, 127.68),
+    "Sendai": (38.26, 140.86)
 }
 
 def get_element(sign_name):
     for element, signs in ELEMENTS.items():
-        if sign_name in signs:
-            return element
+        if sign_name in signs: return element
     return None
 
 def main():
     st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
     st.title("Aroma Soul Navigation 🌟")
-    st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
+    st.markdown("### 星（先天的）と 香り（現在）の体質バランス比較")
+    st.markdown("「好きな香りは自分から遠く、苦手な香りは自分に近い」という理論に基づく分析です。")
 
+    # --- サイドバー入力 ---
     with st.sidebar:
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
-        b_year = st.number_input("年", 1950, 2025, 1990)
-        b_month = st.number_input("月", 1, 12, 1)
-        b_day = st.number_input("日", 1, 31, 1)
-        b_hour = st.number_input("時 (24時間制)", 0, 23, 12)
-        b_min = st.number_input("分", 0, 59, 0)
-        
-        # 都市選択（リストから選ぶ方式に変更）
+        col_b1, col_b2, col_b3 = st.columns(3)
+        b_year = col_b1.number_input("年", 1950, 2025, 1990)
+        b_month = col_b2.number_input("月", 1, 12, 1)
+        b_day = col_b3.number_input("日", 1, 31, 1)
+        col_b4, col_b5 = st.columns(2)
+        b_hour = col_b4.number_input("時", 0, 23, 12)
+        b_min = col_b5.number_input("分", 0, 59, 0)
         city_name = st.selectbox("出生都市", list(CITY_COORDS.keys()))
         
         st.markdown("---")
-        st.header("2. 香りのチェック結果")
-        scent_fire = st.number_input("火の香り", 0, 10, 0)
-        scent_earth = st.number_input("地の香り", 0, 10, 0)
-        scent_air = st.number_input("風の香り", 0, 10, 0)
-        scent_water = st.number_input("水の香り", 0, 10, 0)
-        calc_btn = st.button("分析する")
+        st.header("2. 香りの順位チェック")
+        st.write("8本の香りを嗅ぎ、好きな順に並べた結果（1位〜8位）を入力してください。")
+        st.info("※ 1位＝最も好き、8位＝最も苦手")
 
+        scent_ranks = {}
+        # 各カテゴリーごとに区切って入力欄を表示
+        current_element = None
+        for scent in SCENTS_CONF:
+            if current_element != scent["element"]:
+                st.subheader(ELEMENT_JP[scent["element"]])
+                current_element = scent["element"]
+            # 初期値を少し分散させる（全て1だと見づらいため）
+            default_rank = (SCENTS_CONF.index(scent) % 8) + 1
+            rank = st.number_input(f"{scent['name']} の順位", 1, 8, default_rank, key=scent["key"])
+            scent_ranks[scent["key"]] = rank
+
+        st.markdown("---")
+        calc_btn = st.button("分析する", type="primary")
+
+    # --- 計算と表示 ---
     if calc_btn:
         try:
-            # --- 1. 新エンジン(flatlib)での計算 ---
-            # 日付の作成
-            date_str = f"{b_year}/{b_month:02d}/{b_day:02d}"
-            time_str = f"{b_hour:02d}:{b_min:02d}"
-            date = Datetime(date_str, time_str, '+09:00')
-            
-            # 場所の作成
-            lat, lon = CITY_COORDS[city_name]
-            pos = GeoPos(lat, lon)
-            
-            # チャート作成
+            # 1. 星の計算 (flatlib)
+            date = Datetime(f"{b_year}/{b_month:02d}/{b_day:02d}", f"{b_hour:02d}:{b_min:02d}", '+09:00')
+            pos = GeoPos(*CITY_COORDS[city_name])
             chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
             astro_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
-            details = []
-
-            # 惑星のループ
-            targets = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, 
-                       const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO]
             
+            # 10天体 + ASC/MC のスコア計算
+            targets = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, 
+                       const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
+                       const.ASC, const.MC]
             target_names = ["Sun", "Moon", "Mercury", "Venus", "Mars", 
-                           "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+                           "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "ASC", "MC"]
 
             for i, body_id in enumerate(targets):
-                planet = chart.get(body_id)
-                sign = planet.sign
-                element = get_element(sign)
-                p_name = target_names[i]
-                score = PLANET_SCORES.get(p_name, 0)
-                
+                obj = chart.get(body_id)
+                element = get_element(obj.sign)
                 if element:
-                    astro_scores[element] += score
-                    details.append(f"{p_name} ({sign}) -> {ELEMENT_JP[element]}: +{score}点")
+                    astro_scores[element] += PLANET_SCORES.get(target_names[i], 0)
 
-            # ASC / MC (ハウス)
-            asc = chart.get(const.ASC)
-            mc = chart.get(const.MC)
+            # 2. 香りの計算 (順位の合計)
+            # 苦手（数字が大きい）ほど、その体質が強いという理論
+            scent_scores = {"Fire": 0, "Earth": 0, "Air": 0, "Water": 0}
+            for scent in SCENTS_CONF:
+                scent_scores[scent["element"]] += scent_ranks[scent["key"]]
+
+            # --- 結果表示エリア ---
+            st.header(f"📊 {name}様の分析結果")
             
-            asc_elem = get_element(asc.sign)
-            astro_scores[asc_elem] += PLANET_SCORES["Asc"]
-            details.append(f"ASC ({asc.sign}) -> {ELEMENT_JP[asc_elem]}: +{PLANET_SCORES['Asc']}点")
-
-            mc_elem = get_element(mc.sign)
-            astro_scores[mc_elem] += PLANET_SCORES["Mc"]
-            details.append(f"MC ({mc.sign}) -> {ELEMENT_JP[mc_elem]}: +{PLANET_SCORES['Mc']}点")
-
-            # --- 2. 表示 ---
-            col1, col2 = st.columns([1, 1])
+            col1, col2 = st.columns([1.2, 2])
 
             with col1:
-                st.subheader(f"{name}様の 天体スコア内訳")
-                st.info(f"出生地: {city_name} / 時間: {b_hour}:{b_min}")
-                with st.expander("詳細を見る"):
-                    for d in details:
-                        st.write(d)
-                
-                df_astro = pd.DataFrame(list(astro_scores.items()), columns=["Element", "Score"])
-                df_astro["Label"] = df_astro["Element"].map(ELEMENT_JP)
-                st.dataframe(df_astro.set_index("Label"))
+                st.subheader("スコア内訳")
+                # データフレーム作成
+                df_res = pd.DataFrame([
+                    {"Element": "Fire", "Label": ELEMENT_JP["Fire"], "星スコア": astro_scores["Fire"], "香り順位合計": scent_scores["Fire"]},
+                    {"Element": "Earth", "Label": ELEMENT_JP["Earth"], "星スコア": astro_scores["Earth"], "香り順位合計": scent_scores["Earth"]},
+                    {"Element": "Air", "Label": ELEMENT_JP["Air"], "星スコア": astro_scores["Air"], "香り順位合計": scent_scores["Air"]},
+                    {"Element": "Water", "Label": ELEMENT_JP["Water"], "星スコア": astro_scores["Water"], "香り順位合計": scent_scores["Water"]},
+                ])
+                st.dataframe(df_res.set_index("Label"), use_container_width=True)
+                st.info("💡 香りの「順位合計」が大きいほど、その体質が強く（苦手に感じやすく）、小さいほどその体質が不足して（好きに感じやすく）います。")
 
             with col2:
-                st.subheader("分析結果の可視化")
-                labels = [ELEMENT_JP[k] for k in astro_scores.keys()]
-                colors = ['#FF6B6B', '#4ECDC4', '#A8D8EA', '#3C40C6']
+                st.subheader("バランス比較グラフ")
+                # グラフの準備
+                labels_list = [ELEMENT_JP[k] for k in ["Fire", "Earth", "Air", "Water"]]
+                colors_list = [COLORS[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 astro_values = [astro_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
-                scent_values = [scent_fire, scent_earth, scent_air, scent_water]
+                scent_values = [scent_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
 
+                # 二つの円グラフを並べる
                 fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]],
-                                    subplot_titles=['星のスコア (先天的)', '香りのスコア (現在)'])
+                                    subplot_titles=['🪐 星の比率 (先天的体質)', '🌸 香りの比率 (現在の状態)'])
 
-                fig.add_trace(go.Pie(labels=labels, values=astro_values, name="Astrology", marker_colors=colors, hole=.3), 1, 1)
+                # 左：星
+                fig.add_trace(go.Pie(
+                    labels=labels_list, values=astro_values, name="Astrology",
+                    marker_colors=colors_list, hole=.35,
+                    hovertemplate="<b>%{label}</b><br>スコア: %{value}<br>割合: %{percent}"
+                ), 1, 1)
                 
-                if sum(scent_values) > 0:
-                    fig.add_trace(go.Pie(labels=labels, values=scent_values, name="Scent", marker_colors=colors, hole=.3), 1, 2)
-                else:
-                    st.warning("香りのデータが未入力です")
+                # 右：香り（順位合計に基づく）
+                fig.add_trace(go.Pie(
+                    labels=labels_list, values=scent_values, name="Scent",
+                    marker_colors=colors_list, hole=.35,
+                    hovertemplate="<b>%{label}</b><br>順位合計: %{value}位<br>割合: %{percent}"
+                ), 1, 2)
 
-                fig.update_layout(showlegend=True)
+                fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5))
                 st.plotly_chart(fig, use_container_width=True)
-
-            # --- 3. メッセージ ---
-            max_astro = max(astro_scores, key=astro_scores.get)
-            strongest_element = ELEMENT_JP[max_astro]
-            st.success(f"あなたの星の配置は **{strongest_element}** の要素が最も強いです。")
-            
-            if sum(scent_values) > 0:
-                scent_dict = {"Fire": scent_fire, "Earth": scent_earth, "Air": scent_air, "Water": scent_water}
-                max_scent = max(scent_dict, key=scent_dict.get)
-                strongest_scent = ELEMENT_JP[max_scent]
-                
-                if max_astro == max_scent:
-                    st.write(f"現在選んだ香りも **{strongest_scent}** が多く、本来の資質を強調しています。")
-                else:
-                    st.write(f"星は **{strongest_element}** ですが、香りは **{strongest_scent}** を求めています。")
 
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
