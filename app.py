@@ -1,49 +1,50 @@
 import streamlit as st
-import os
+import pandas as pd
+import plotly.graph_objects as go
+from kerykeion import KrInstance
+from plotly.subplots import make_subplots
 
-st.set_page_config(page_title="システム診断モード")
-st.title("🕵️‍♀️ システム診断モード")
+# --- 設定: 4元素と星座の対応 ---
+ELEMENTS = {
+    "Fire": ["Ari", "Leo", "Sag"],  # 火
+    "Earth": ["Tau", "Vir", "Cap"], # 地
+    "Air": ["Gem", "Lib", "Aqr"],   # 風
+    "Water": ["Can", "Sco", "Pis"]  # 水
+}
 
-st.info("サーバーの中にあるファイルを調べています...")
+ELEMENT_JP = {
+    "Fire": "火 (直感/情熱)",
+    "Earth": "地 (感覚/現実)",
+    "Air": "風 (思考/情報)",
+    "Water": "水 (感情/共感)"
+}
 
-# 1. フォルダにある全ファイルを表示
-files = os.listdir('.')
-st.write("📂 現在のファイル一覧:")
-st.code(files)
+# --- 天体のスコア配分 ---
+PLANET_SCORES = {
+    "Sun": 5, "Moon": 5, "Asc": 5, "Mc": 5,    # 個人への影響大
+    "Mercury": 3, "Venus": 3, "Mars": 3,       # 次に強い
+    "Jupiter": 2, "Saturn": 2,                 # 社会天体
+    "Uranus": 1, "Neptune": 1, "Pluto": 1      # 世代天体
+}
 
-# 2. requirements.txt の捜索
-target = "requirements.txt"
+def get_element(sign_abbr):
+    """星座名からエレメント（火地風水）を判定"""
+    for element, signs in ELEMENTS.items():
+        if sign_abbr in signs:
+            return element
+    return None
 
-if target in files:
-    st.success(f"✅ {target} は正しく存在します！")
+def main():
+    st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
     
-    # 中身のチェック
-    with open(target, "r") as f:
-        content = f.read()
-    st.write("📄 ファイルの中身:")
-    st.code(content)
-    
-    if "kerykeion" in content:
-        st.success("✅ 中身も完璧です！")
-        st.balloons()
-        st.markdown("### 🎉 診断結果：システムは正常です")
-        st.write("この画面が出ているなら、準備は整っています。次のステップで本番コードに戻しましょう。")
-    else:
-        st.error(f"❌ ファイルはありますが、中に 'kerykeion' が書かれていません！")
-        st.write("GitHubで requirements.txt を編集して、kerykeion と書き加えてください。")
+    st.title("Aroma Soul Navigation 🌟")
+    st.markdown("### 星（先天的な資質）と 香り（現在の状態）のバランス分析")
 
-else:
-    st.error(f"❌ {target} が見つかりません！")
-    
-    # 似ている名前を探す（これが犯人の可能性大！）
-    found_similar = False
-    for f in files:
-        if "requirement" in f.lower():
-            st.warning(f"⚠️ 似ているファイルを見つけました: 【 {f} 】")
-            if f == "requirements.txt.txt":
-                st.error("犯人はこれです！「.txt」が2回重なっています。")
-                st.write("対策：GitHubでこのファイルの名前変更を選び、後ろの .txt を1つ消してください。")
-            found_similar = True
-            
-    if not found_similar:
-        st.error("requirements.txt というファイル自体が作られていないようです。GitHubで「Add file」から作ってください。")
+    # --- サイドバー: 入力エリア ---
+    with st.sidebar:
+        st.header("1. 出生データの入力")
+        name = st.text_input("お名前", "Guest")
+        b_year = st.number_input("年", 1950, 2025, 1990)
+        b_month = st.number_input("月", 1, 12, 1)
+        b_day = st.number_input("日", 1, 31, 1)
+        b
