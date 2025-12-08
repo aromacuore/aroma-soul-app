@@ -44,45 +44,44 @@ def download_ephemeris():
 def main():
     st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
 
-    # --- 🖨️ 印刷設定（スマホ全ページ出力・レイアウト崩れ防止 完全版） ---
+    # --- 🖨️ 印刷設定（スマホ全ページ出力・最終対策版） ---
     st.markdown("""
         <style>
         @media print {
-            /* 1. 不要な要素を消す */
+            /* 1. 【CRITICAL FIX】全体を印刷モードで全展開させる */
+            html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main {
+                overflow: visible !important; /* スクロール機能を無効化 */
+                height: auto !important; /* 高さをコンテンツに合わせて全展開 */
+                position: static !important; 
+            }
+            
+            /* 2. 不要な要素を消す */
             [data-testid="stSidebar"], .stButton, header, footer, [data-testid="stToolbar"] {
                 display: none !important;
             }
             
-            /* 2. ★最重要★ スマホで途切れるのを防ぐ（スクロール解除・全表示） */
-            html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main {
-                overflow: visible !important;
-                height: auto !important;
-                position: static !important;
-                display: block !important;
-            }
-
             /* 3. 用紙設定 (A4) */
             @page {
                 size: A4 portrait;
-                margin: 5mm; /* 余白を最小限に */
+                margin: 5mm; 
             }
 
-            /* 4. 全体の縮尺調整 (PC・スマホ共通) */
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                zoom: 0.75 !important; /* 75%に縮小して確実に収める */
-            }
-
+            /* 4. 全体の縮尺調整 (横幅と縦幅の同時対策) */
             .block-container {
                 max-width: 100% !important;
                 width: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                overflow: visible !important; /* ここも重要 */
+                zoom: 0.75 !important; /* 横の切れを防ぐため75%に縮小 */
             }
 
-            /* 5. カラムを強制的に「横並び」にする (Big 3など) */
+            /* 5. 文字の折り返し設定 */
+            .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div {
+                white-space: pre-wrap !important;
+                word-wrap: break-word !important;
+            }
+
+            /* 6. カラムを強制的に「横並び」にし、改ページを防ぐ */
             [data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-direction: row !important;
@@ -92,27 +91,13 @@ def main():
             [data-testid="column"] {
                 flex: 1 !important;
                 width: auto !important;
-                min-width: 0 !important;
-                margin-right: 10px !important;
-                page-break-inside: avoid !important; /* カラム内で切れないように */
+                page-break-inside: avoid !important;
             }
-
-            /* 6. グラフのサイズ調整 */
+            
+            /* 7. グラフのサイズ調整 */
             .stPlotlyChart {
                 width: 100% !important;
                 height: auto !important;
-                display: block !important;
-                page-break-inside: avoid;
-            }
-            
-            /* 7. 文字の折り返し */
-            .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div {
-                white-space: pre-wrap !important;
-                word-wrap: break-word !important;
-            }
-            
-            /* 8. コンテナ（枠線）の改ページ対策 */
-            div[data-testid="stVerticalBlock"] > div {
                 page-break-inside: avoid;
             }
         }
@@ -164,10 +149,7 @@ def main():
     }
 
     COLORS = {
-        'Fire': '#FFCA99',  # ペールオレンジ
-        'Earth': '#A4D65E', # 黄緑
-        'Air': '#FFACC7',   # ピンク
-        'Water': '#87CEEB'  # 水色
+        'Fire': '#FFCA99', 'Earth': '#A4D65E', 'Air': '#FFACC7', 'Water': '#87CEEB'
     }
 
     OIL_NAMES = {
@@ -177,14 +159,12 @@ def main():
         "Water": "レモングラス、リトセア、ユーカリ・レモン、ローズマリー・カンファー"
     }
 
-    # --- 1. Big 3の解説テキスト ---
     BIG3_EXPLANATION = {
         "Sun": "あなたがこの世に生まれ持った「魂の核」であり、意識的に目指すべき人生のテーマです。社会の中で輝くための「表の顔」であり、迷った時に立ち返るべきエネルギーの源です。",
         "Moon": "あなたの無意識、感情、プライベートな素顔を表します。理屈ではなく「快・不快」を感じるセンサーであり、心がリラックスして満たされるために必要な要素です。",
         "Asc": "他者から見たあなたの第一印象や、無意識に出てしまう行動パターン、生まれ持った資質を表します。「世界への玄関口」とも呼ばれ、あなたが社会と接する際のマスク（仮面）のような役割を持ちます。"
     }
 
-    # --- 2. 本来の資質（星）の定義 ---
     STAR_DEFINITIONS = {
         "Fire": """
         **【🔥 火の気質を多く持つ方の定義】**（胆汁質：牡羊座、獅子座、射手座など）  
@@ -208,7 +188,6 @@ def main():
         """
     }
 
-    # --- 3. 香りの好みで見える体質 (苦手＝過剰) ---
     DISLIKE_ANALYSIS = {
         "Fire": """
         **【🔥 胆汁質タイプ】：「火」が過剰になり、休息を求めている可能性**
