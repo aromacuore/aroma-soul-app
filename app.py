@@ -10,6 +10,45 @@ import swisseph as swe
 import os
 import requests
 
+# --- 🖨️ 印刷設定（PDF化のズレ防止・文字切れ防止） ---
+st.markdown("""
+    <style>
+    @media print {
+        /* 不要な要素を隠す */
+        [data-testid="stSidebar"], .stButton, header, footer, [data-testid="stToolbar"] {
+            display: none !important;
+        }
+        
+        /* 全体のレイアウトを紙に合わせる */
+        .block-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 1rem !important;
+            margin: 0 !important;
+        }
+
+        /* 文字の折り返しを強制する（重要） */
+        .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div {
+            white-space: pre-wrap !important; /* 改行は維持しつつ、端で折り返す */
+            word-wrap: break-word !important; /* 長い単語も折り返す */
+            overflow-wrap: break-word !important;
+        }
+
+        /* グラフのサイズ調整 */
+        .js-plotly-plot {
+            max-width: 100% !important;
+            page-break-inside: avoid; /* グラフの途中で改ページさせない */
+        }
+
+        /* 枠線（info/success等）の中身も折り返す */
+        div[data-testid="stAlert"] {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+        }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
 def download_ephemeris():
     files = {
@@ -65,7 +104,6 @@ ELEMENTS = {
     "Water": ["Cancer", "Scorpio", "Pisces"]
 }
 
-# アイコンを設定（風を🌬️に戻しました）
 ELEMENT_JP = {
     "Fire": "🔥 火 (胆汁質)",
     "Earth": "🌏 地 (神経質)",
@@ -331,7 +369,7 @@ def main():
                 fig.update_layout(margin=dict(t=20, b=0, l=0, r=0))
                 st.plotly_chart(fig, use_container_width=True)
 
-            # --- 診断レポート（修正版） ---
+            # --- 診断レポート ---
             st.markdown("---")
             
             st.markdown("#### 1. 分析結果の概要")
