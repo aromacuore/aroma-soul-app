@@ -10,7 +10,18 @@ import swisseph as swe
 import os
 import requests
 
-# --- 🛠 辞書ファイル（エフェメリス）の自動ダウンロード ---
+# --- 🌟 関数定義 ---
+def get_element(sign_name):
+    ELEMENTS = {
+        "Fire": ["Aries", "Leo", "Sagittarius"],
+        "Earth": ["Taurus", "Virgo", "Capricorn"],
+        "Air": ["Gemini", "Libra", "Aquarius"],
+        "Water": ["Cancer", "Scorpio", "Pisces"]
+    }
+    for element, signs in ELEMENTS.items():
+        if sign_name in signs: return element
+    return None
+
 def download_ephemeris():
     files = {
         "sepl_18.se1": "https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sepl_18.se1",
@@ -29,63 +40,80 @@ def download_ephemeris():
                 st.error(f"System Error: {e}")
                 st.stop()
 
-# --- 🌟 関数定義（ここを一番上に移動しました） ---
-def get_element(sign_name):
-    ELEMENTS = {
-        "Fire": ["Aries", "Leo", "Sagittarius"],
-        "Earth": ["Taurus", "Virgo", "Capricorn"],
-        "Air": ["Gemini", "Libra", "Aquarius"],
-        "Water": ["Cancer", "Scorpio", "Pisces"]
-    }
-    for element, signs in ELEMENTS.items():
-        if sign_name in signs: return element
-    return None
-
 # --- Main App ---
 def main():
     st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
 
-    # --- 🖨️ 印刷設定 ---
+    # --- 🖨️ 印刷設定（スマホ全ページ出力・レイアウト崩れ防止 完全版） ---
     st.markdown("""
         <style>
         @media print {
+            /* 1. 不要な要素を消す */
             [data-testid="stSidebar"], .stButton, header, footer, [data-testid="stToolbar"] {
                 display: none !important;
             }
+            
+            /* 2. ★最重要★ スマホで途切れるのを防ぐ（スクロール解除・全表示） */
+            html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main {
+                overflow: visible !important;
+                height: auto !important;
+                position: static !important;
+                display: block !important;
+            }
+
+            /* 3. 用紙設定 (A4) */
             @page {
                 size: A4 portrait;
-                margin: 1cm;
+                margin: 5mm; /* 余白を最小限に */
             }
+
+            /* 4. 全体の縮尺調整 (PC・スマホ共通) */
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                zoom: 0.75 !important; /* 75%に縮小して確実に収める */
+            }
+
             .block-container {
                 max-width: 100% !important;
                 width: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                zoom: 80% !important;
+                overflow: visible !important; /* ここも重要 */
             }
+
+            /* 5. カラムを強制的に「横並び」にする (Big 3など) */
+            [data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            [data-testid="column"] {
+                flex: 1 !important;
+                width: auto !important;
+                min-width: 0 !important;
+                margin-right: 10px !important;
+                page-break-inside: avoid !important; /* カラム内で切れないように */
+            }
+
+            /* 6. グラフのサイズ調整 */
+            .stPlotlyChart {
+                width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                page-break-inside: avoid;
+            }
+            
+            /* 7. 文字の折り返し */
             .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div {
                 white-space: pre-wrap !important;
                 word-wrap: break-word !important;
-                overflow-wrap: break-word !important;
             }
-            .js-plotly-plot, .plot-container, .main-svg {
-                max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                margin: 0 auto !important;
-                display: block !important;
-            }
-            .stPlotlyChart {
-                width: 18cm !important; 
-                max-width: 100% !important;
-                margin: 0 auto !important;
+            
+            /* 8. コンテナ（枠線）の改ページ対策 */
+            div[data-testid="stVerticalBlock"] > div {
                 page-break-inside: avoid;
-            }
-            [data-testid="column"] {
-                width: 100% !important;
-                display: block !important;
-                page-break-inside: avoid !important;
-                margin-bottom: 1rem !important;
             }
         }
         </style>
@@ -95,7 +123,7 @@ def main():
     download_ephemeris()
     swe.set_ephe_path(os.getcwd())
 
-    # --- データ定義 ---
+    # --- 🌟 辞書データ ---
     SIGN_JP = {
         "Aries": "牡羊座", "Taurus": "牡牛座", "Gemini": "双子座", "Cancer": "蟹座",
         "Leo": "獅子座", "Virgo": "乙女座", "Libra": "天秤座", "Scorpio": "蠍座",
@@ -121,6 +149,13 @@ def main():
         "鹿児島県": (31.56, 130.55), "沖縄県": (26.21, 127.68)
     }
 
+    ELEMENTS = {
+        "Fire": ["Aries", "Leo", "Sagittarius"],
+        "Earth": ["Taurus", "Virgo", "Capricorn"],
+        "Air": ["Gemini", "Libra", "Aquarius"],
+        "Water": ["Cancer", "Scorpio", "Pisces"]
+    }
+
     ELEMENT_JP = {
         "Fire": "🔥 火 (胆汁質)",
         "Earth": "🌏 地 (神経質)",
@@ -129,7 +164,10 @@ def main():
     }
 
     COLORS = {
-        'Fire': '#FFCA99', 'Earth': '#A4D65E', 'Air': '#FFACC7', 'Water': '#87CEEB'
+        'Fire': '#FFCA99',  # ペールオレンジ
+        'Earth': '#A4D65E', # 黄緑
+        'Air': '#FFACC7',   # ピンク
+        'Water': '#87CEEB'  # 水色
     }
 
     OIL_NAMES = {
@@ -139,12 +177,14 @@ def main():
         "Water": "レモングラス、リトセア、ユーカリ・レモン、ローズマリー・カンファー"
     }
 
+    # --- 1. Big 3の解説テキスト ---
     BIG3_EXPLANATION = {
         "Sun": "あなたがこの世に生まれ持った「魂の核」であり、意識的に目指すべき人生のテーマです。社会の中で輝くための「表の顔」であり、迷った時に立ち返るべきエネルギーの源です。",
         "Moon": "あなたの無意識、感情、プライベートな素顔を表します。理屈ではなく「快・不快」を感じるセンサーであり、心がリラックスして満たされるために必要な要素です。",
         "Asc": "他者から見たあなたの第一印象や、無意識に出てしまう行動パターン、生まれ持った資質を表します。「世界への玄関口」とも呼ばれ、あなたが社会と接する際のマスク（仮面）のような役割を持ちます。"
     }
 
+    # --- 2. 本来の資質（星）の定義 ---
     STAR_DEFINITIONS = {
         "Fire": """
         **【🔥 火の気質を多く持つ方の定義】**（胆汁質：牡羊座、獅子座、射手座など）  
@@ -168,6 +208,7 @@ def main():
         """
     }
 
+    # --- 3. 香りの好みで見える体質 (苦手＝過剰) ---
     DISLIKE_ANALYSIS = {
         "Fire": """
         **【🔥 胆汁質タイプ】：「火」が過剰になり、休息を求めている可能性**
@@ -203,6 +244,7 @@ def main():
         """
     }
 
+    # --- 4. 好きな香りはあなたを調和させます (好き＝不足・薬) ---
     LIKE_ANALYSIS = {
         "Fire": """
         * **好きな香り:** [LIKE_OIL] など
