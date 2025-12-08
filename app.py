@@ -65,6 +65,7 @@ ELEMENTS = {
     "Water": ["Cancer", "Scorpio", "Pisces"]
 }
 
+# アイコンを設定（風を🌬️に戻しました）
 ELEMENT_JP = {
     "Fire": "🔥 火 (胆汁質)",
     "Earth": "🌏 地 (神経質)",
@@ -79,7 +80,6 @@ COLORS = {
     'Water': '#87CEEB'  # 水色
 }
 
-# 精油リスト（表示用）
 OIL_NAMES = {
     "Fire": "ローレル、ユーカリ・ラディアタ、オレンジ・スイート",
     "Earth": "ラベンダー・アングスティフォリア、カモマイル・ローマン、イランイラン",
@@ -367,12 +367,12 @@ def main():
 
             st.divider()
 
-            st.write(f"""
+            st.markdown(f"""
             「ズレ」は、決して直すべき欠点ではありません。  
             むしろ、本来の才能を活かすために必要な「エネルギーの調整」を心身が求めているサインです。
             
-            **【{OIL_NAMES[like_scent_elem]}】** が求めるエネルギーを補い、  
-            **【{OIL_NAMES[dislike_scent_elem]}】** が示す過剰なエネルギーを穏やかに整えることで、  
+            好きな香りである **{ELEMENT_JP[like_scent_elem]}** の精油 **【{OIL_NAMES[like_scent_elem]}】** が求めるエネルギーを補い、  
+            苦手な香りである **{ELEMENT_JP[dislike_scent_elem]}** の精油 **【{OIL_NAMES[dislike_scent_elem]}】** が示す過剰なエネルギーを穏やかに整えることで、  
             あなたが本来お持ちの **【{ELEMENT_JP[core_star_elem]}】** の才能（美点）は、迷いなく輝き始めます。
             """)
             
