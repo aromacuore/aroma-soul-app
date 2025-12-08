@@ -1,5 +1,6 @@
 streamlit
 flatlib
+pyswisseph
 plotly
 pandas
 requests
