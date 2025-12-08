@@ -20,13 +20,13 @@ def download_ephemeris():
     for filename, url in files.items():
         if not os.path.exists(filename):
             try:
-                with st.spinner(f'データ準備中... {filename}'):
+                with st.spinner(f'System initializing... {filename}'):
                     response = requests.get(url)
                     response.raise_for_status()
                     with open(filename, 'wb') as f:
                         f.write(response.content)
             except Exception as e:
-                st.error(f"ダウンロードエラー: {e}")
+                st.error(f"System Error: {e}")
                 st.stop()
 
 download_ephemeris()
@@ -66,10 +66,10 @@ ELEMENTS = {
 }
 
 ELEMENT_JP = {
-    "Fire": "火 (胆汁質)",
-    "Earth": "地 (神経質)",
-    "Air": "風 (多血質)",
-    "Water": "水 (リンパ質)"
+    "Fire": "🔥 火 (胆汁質)",
+    "Earth": "🌏 地 (神経質)",
+    "Air": "🌬️ 風 (多血質)",
+    "Water": "💧 水 (リンパ質)"
 }
 
 COLORS = {
@@ -79,6 +79,7 @@ COLORS = {
     'Water': '#87CEEB'  # 水色
 }
 
+# 精油リスト（表示用）
 OIL_NAMES = {
     "Fire": "ローレル、ユーカリ・ラディアタ、オレンジ・スイート",
     "Earth": "ラベンダー・アングスティフォリア、カモマイル・ローマン、イランイラン",
@@ -96,61 +97,86 @@ BIG3_EXPLANATION = {
 # --- 2. 本来の資質（星）の定義 ---
 STAR_DEFINITIONS = {
     "Fire": """
-    **本来の資質:** 「決断力、行動力、情熱、自己信頼」といった火のエレメントを核に持つ、リーダーシップと目標達成能力に優れた資質です。\n
-    **美点の活用:** 迷わず目標に向かって進む力が〇〇様の人生を推進します。
+    **【🔥 火の気質を多く持つ方の定義】**（胆汁質：牡羊座、獅子座、射手座など）  
+    * **本来の資質:** 「決断力、行動力、情熱、自己信頼」といった火のエレメントを核に持つ、リーダーシップと目標達成能力に優れた資質です。
+    * **美点の活用:** 迷わず目標に向かって進む力があなたの人生を推進します。
     """,
     "Earth": """
-    **本来の資質:** 「安定性、堅実さ、継続力、現実的な実行力」といった土のエレメントを核に持つ、目標を確実に形にする力と、安心感を生み出す資質です。\n
-    **美点の活用:** 現実の基礎を築き、ブレずに物事をやり遂げる力が〇〇様の人生を支えます。
+    **【🌏 土の気質を持つ方の定義】**（神経質：牡牛座、乙女座、山羊座など）  
+    * **本来の資質:** 「安定性、堅実さ、継続力、現実的な実行力」といった土のエレメントを核に持つ、目標を確実に形にする力と、安心感を生み出す資質です。
+    * **美点の活用:** 現実の基礎を築き、ブレずに物事をやり遂げる力があなたの人生を支えます。
     """,
     "Air": """
-    **本来の資質:** 「社交性、柔軟性、好奇心、論理的な思考力」といった風のエレメントを核に持つ、コミュニケーション能力と、状況を多角的に捉える資質です。\n
-    **美点の活用:** 軽やかに人と繋がり、新しい情報を取り入れ、人生に変化と広がりをもたらします。
+    **【🌬️ 風の気質を持つ方の定義】**（多血質：双子座、天秤座、水瓶座など）  
+    * **本来の資質:** 「社交性、柔軟性、好奇心、論理的な思考力」といった風のエレメントを核に持つ、コミュニケーション能力と、状況を多角的に捉える資質です。
+    * **美点の活用:** 軽やかに人と繋がり、新しい情報を取り入れ、人生に変化と広がりをもたらします。
     """,
     "Water": """
-    **本来の資質:** 「共感力、受容性、優しさ、直感力」といった水のエレメントを核に持つ、他者の感情を深く理解し、調和を生み出す資質です。\n
-    **美点の活用:** 場の雰囲気や人間関係を円滑にし、深い感情的な満足を人生にもたらします。
+    **【💧 水の気質を持つ方の定義】**（リンパ質：蟹座、蠍座、魚座など）  
+    * **本来の資質:** 「共感力、受容性、優しさ、直感力」といった水のエレメントを核に持つ、他者の感情を深く理解し、調和を生み出す資質です。
+    * **美点の活用:** 場の雰囲気や人間関係を円滑にし、深い感情的な満足を人生にもたらします。
     """
 }
 
-# --- 3. パターン別診断メッセージ ---
-PATTERN_MESSAGES = {
-    "Fire": { 
-        "title": "【パターン 1：水（リンパ質）の不足・火（胆汁質）の過剰タイプ】",
-        "type": "🔥 胆汁質タイプ：本来の「火」が過剰になり、休息を求めている可能性",
-        "detail": """
-        * **苦手な香り（火）：** 心身が「火」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が火のエレメント以外の場合は、怒りの感情の抑圧や心身の隠れた炎症を示している可能性もあります。
-        * **好きな香り（水）：** 心身が「水」のエレメントを好むのは、本来の情熱（火）が過剰になり、休息やクールダウン、受容することを心身が強く求めているサインかもしれません。
-        """,
-        "cause": "〇〇様の【太陽星座の気質】の「決断力と情熱」が、過剰になりすぎて休息や調和（水）を求めている状態です。この火と水のアンバランスが、心身の疲弊や自己強制の罠を生み出し、迷いの原因となっている可能性があります。太陽星座が火のエレメントの方の通常モードではありますが、そうでない場合は、ご自身の心と体に怒りの感情の抑圧や隠れた炎症がないか向き合ってみてください。"
-    },
-    "Earth": {
-        "title": "【パターン 2：土（神経質）の過剰・風（多血質）の不足タイプ】",
-        "type": "🌏 神経質タイプ：本来の「土」が過剰になり、停滞感を感じている可能性",
-        "detail": """
-        * **苦手な香り（土）：** ご自身が「土」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が土のエレメント以外の場合は、考えすぎて動けない時や疲れている時にラベンダーが苦手になります。楽しいことを取り入れるようにしましょう。
-        * **好きな香り（風）：** 「風」の香りを好むのは、現状の安定した状態（土）に新しい風（風）を入れてバランスを取ろうとされているサインです。
-        """,
-        "cause": "〇〇様の【太陽星座の気質】（土）の「堅実な継続力」が、「変化への恐れ」に転じてしまい、柔軟な発想や行動力（風）が不足しています。この土と風のアンバランスが、同じ悩みを繰り返す停滞感を生み出し、迷いの原因となっている可能性があります。太陽星座が土のエレメントの方の通常モードではありますが、そうでない場合は、今が考えすぎて動けない時ではないか、ご自身の心と向き合ってみてください。"
-    },
-    "Air": {
-        "title": "【パターン 3：風（多血質）の過剰・土（神経質）の不足タイプ】",
-        "type": "🌬️ 多血質タイプ：本来の「風」が過剰になり、地に足がついていない可能性",
-        "detail": """
-        * **苦手な香り（風）：** 心身が「風」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が風のエレメント以外の場合は、地に足をつけて安心したいのかもしれません。
-        * **好きな香り（土）：** 「土」のラベンダー等を好むのは、さらに多くの情報や刺激を求めている一方で、足元を固めるための静かな時間（土）が圧倒的に不足している状態を示しています。
-        """,
-        "cause": "〇〇様の【太陽星座の気質】（風）の「社交性と柔軟性」が、「散漫さや軽薄さ」に転じてしまい、目標を現実的に実行するための安定感や集中力（土）が不足しています。このため土の香りが好ましいと感じます。この風と土のアンバランスが、空回りや目標達成の遅れを生み出し、迷いの原因となっている可能性があります。"
-    },
-    "Water": {
-        "title": "【パターン 4：火（胆汁質）の不足・水（リンパ質）の過剰タイプ】",
-        "type": "💧 リンパ質タイプ：本来の「水」が過剰になり、自己主張ができていない可能性",
-        "detail": """
-        * **苦手な香り（水）：** 心身が「水」のエレメントを拒否しているのは、〇〇様の「受容と調和（水）」を重視するあまり、自己主張や決断を下すことを心身が避けているサインかもしれません。
-        * **好きな香り（火）：** 「火」の香りを好むのは、今の環境からさらに能動的になりたい、情熱をもって行動したいというニーズが強い一方で、自分から前に出るためのエネルギー（火）が圧倒的に不足している状態を示しています。
-        """,
-        "cause": "〇〇様の【太陽星座の気質】（水）の「優しさや共感力」が、「自己犠牲や受動性」に転じてしまい、自分の人生を自分で決め、情熱をもって行動するためのエネルギー（火）が不足しています。この水と火のアンバランスが、他者の意見に流されることによる迷いを生み出している可能性があります。"
-    }
+# --- 3. 香りの好みで見える体質 (苦手＝過剰) ---
+DISLIKE_ANALYSIS = {
+    "Fire": """
+    **【🔥 胆汁質タイプ】：「火」が過剰になり、休息を求めている可能性**
+    * **苦手な香り:** [DISLIKE_OIL] など
+    * 心身が「火」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が火のエレメント以外の場合は、怒りの感情の抑圧や心身の隠れた炎症を示している可能性もあります。
+    
+    この場合「決断力と情熱」が、過剰になりすぎている状態です。この火のアンバランスが、心身の疲弊や自己強制の罠を生み出し、迷いの原因となっている可能性があります。太陽星座が火のエレメントの方の通常モードではありますが、そうでない場合は、ご自身の心と体に怒りの感情の抑圧や隠れた炎症がないか向き合ってみてください。
+    """,
+    "Earth": """
+    **【🌏 神経質タイプ】：本来の「土」が過剰になり、停滞感を感じている可能性**
+    * **苦手な香り:** [DISLIKE_OIL] など
+    * ご自身が「土」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が土のエレメント以外の場合は、考えすぎて動けない時や疲れている時にこの香りが苦手に感じます。
+    
+    **迷いの原因:** （土）の「堅実な継続力」が、「変化への恐れ」に転じてしまっています。この土のアンバランスが、同じ悩みを繰り返す停滞感を生み出し、迷いの原因となっている可能性があります。太陽星座が土のエレメントの方の通常モードではありますが、そうでない場合は、今が考えすぎて動けない時ではないか、ご自身の心身と向き合ってみてください。
+    """,
+    "Air": """
+    **【🌬️ 多血質タイプ】：本来の「風」が過剰になり、地に足がついていない可能性**
+    * **苦手な香り:** [DISLIKE_OIL] など
+    * 心身が「風」のエレメントを拒否しているのは、ご自身のエネルギーが十分に満たされている証拠ですが、太陽星座が風のエレメント以外の場合は、地に足をつけて安心したいのかもしれません。
+    
+    **迷いの原因:** （風）の「社交性と柔軟性」が、「散漫さや軽薄さ」に転じてしまっています。この風のアンバランスが同じ悩みを繰り返す停滞感を生み出し、迷いの原因となっている可能性があります。
+    
+    太陽星座が風のエレメントの方の通常モードではありますが、そうでない場合は、今が散漫さや軽薄さがでていないか、ご自身の心身と向き合ってみてください。
+    """,
+    "Water": """
+    **【💧 リンパ質タイプ】：「水」が過剰になり、自己主張ができていない可能性**
+    * **苦手な香り:** [DISLIKE_OIL] など
+    * 心身が「水」のエレメントを拒否しているのは、「受容と調和（水）」を重視するあまり、自己主張や決断を下すことを心身が避けているサインかもしれません。
+    
+    **迷いの原因:** （水）の「優しさや共感力」が、「自己犠牲や受動性」に転じてしまっています。この水のアンバランスが他者の意見に流されることによる迷いを生み出している可能性があります。
+    
+    太陽星座が水のエレメントの方の通常モードではありますが、そうでない場合は、今我慢しすぎていたり、人のために生きすぎているかもしれません。自分に優しい時間を取ってみてください。
+    """
+}
+
+# --- 4. 好きな香りはあなたを調和させます (好き＝不足・薬) ---
+LIKE_ANALYSIS = {
+    "Fire": """
+    * **好きな香り:** [LIKE_OIL] など
+    * 「火」の香りを好むのは、今の環境からさらに能動的になりたい、情熱をもって行動したいというニーズが強い一方で、自分から前に出るためのエネルギー（火）が圧倒的に不足している状態を示しています。
+    * 自分の人生を自分で決め、情熱をもって行動するためのエネルギー（火）をこの香りは持っています。
+    * あなたの決断力行動力を支えます。
+    """,
+    "Earth": """
+    * **好きな香り:** [LIKE_OIL] など
+    * 「土」の香りを好むのは、地に足をつけて、冷静に過ごしたいときです。
+    * 静かに五感が満たされる時間をすごしましょう。
+    """,
+    "Air": """
+    * **好きな香り:** [LIKE_OIL] など
+    * 「風」の香りを好むのは、現状に新しい風（風）を入れてバランスを取ろうとされているサインです。
+    * 楽しいことを取り入れたり、考えすぎず執着せず緩く過ごしたいときです。
+    """,
+    "Water": """
+    * **好きな香り:** [LIKE_OIL] など
+    * 心身が「水」のエレメントを好むのは、休息やクールダウン、受容することを心身が強く求めているサインかもしれません。
+    * 我慢しすぎていないか、体に炎症がないか、疲れすぎていないか、心身に聞いてみてください。
+    """
 }
 
 SCENTS_CONF = [
@@ -251,101 +277,110 @@ def main():
 
             # 診断ロジック
             core_star_elem = astro_sun_elem
+            
+            # 好きな香り(求めている): スコア小 & 順位高
             like_scent_elem = min(scent_scores.keys(), key=lambda k: (scent_scores[k], min_ranks[k]))
+            
+            # 苦手な香り(過剰・拒否): スコア大 & 順位低
             dislike_scent_elem = max(scent_scores.keys(), key=lambda k: (scent_scores[k], -max_ranks[k]))
-            pattern = PATTERN_MESSAGES[dislike_scent_elem]
 
-            # --- 結果表示（レイアウト整理） ---
-            st.header(f"📊 {name}様の分析レポート")
+            # --- 結果表示 ---
+            st.header(f"【Aroma Soul Navigation 】あなたの「迷いの原因」分析レポート")
+            st.write("「今の心身の状態」と「本来の資質」のズレを分析いたしました。")
             
-            # --- セクション1: 基本データ（Big3 & スコア） ---
-            st.markdown("### 1. 魂の羅針盤 (Big 3) と バランス分析")
-            
-            # Big3表示
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown(f"**☀️ 太陽星座 ({SIGN_JP[sun_obj.sign]})**")
-                st.caption(f"{BIG3_EXPLANATION['Sun']}")
-            with c2:
-                st.markdown(f"**🌙 月星座 ({SIGN_JP[chart.get(const.MOON).sign]})**")
-                st.caption(f"{BIG3_EXPLANATION['Moon']}")
-            with c3:
-                st.markdown(f"**🏹 アセンダント ({SIGN_JP[chart.get(const.ASC).sign]})**")
-                st.caption(f"{BIG3_EXPLANATION['Asc']}")
-            
-            st.markdown("---")
+            # --- Big 3 ---
+            with st.container(border=True):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.markdown(f"**☀️ 太陽 (本質)**")
+                    st.write(f"### {SIGN_JP[sun_obj.sign]}")
+                    st.caption(BIG3_EXPLANATION['Sun'])
+                with c2:
+                    st.markdown(f"**🌙 月 (内面)**")
+                    st.write(f"### {SIGN_JP[chart.get(const.MOON).sign]}")
+                    st.caption(BIG3_EXPLANATION['Moon'])
+                with c3:
+                    st.markdown(f"**🏹 ASC (外見)**")
+                    st.write(f"### {SIGN_JP[chart.get(const.ASC).sign]}")
+                    st.caption(BIG3_EXPLANATION['Asc'])
 
-            # スコア表とグラフ
+            st.write("") 
+
+            # --- グラフとスコア ---
             col_g1, col_g2 = st.columns([1, 1.2])
+            
             with col_g1:
-                st.write("**【スコア内訳】**")
+                st.markdown("**スコア内訳**")
                 df_res = pd.DataFrame([
-                    {"性質": ELEMENT_JP[e], "星スコア": astro_scores[e], "香り順位合計": scent_scores[e]} 
+                    {"性質": ELEMENT_JP[e], "星": astro_scores[e], "香り(順位計)": scent_scores[e]} 
                     for e in ["Fire", "Earth", "Air", "Water"]
                 ])
-                # スコアの説明を追加
-                st.dataframe(df_res.set_index("性質"), use_container_width=True)
-                st.caption("※香り順位合計：数字が小さいほど「好き」、大きいほど「苦手」を表します。")
+                st.dataframe(df_res, hide_index=True, use_container_width=True)
+                st.caption("※香り順位計：数字が小さいほど「好き」、大きいほど「苦手」")
 
             with col_g2:
-                # グラフ
                 labels_list = [ELEMENT_JP[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 colors_list = [COLORS[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 astro_values = [astro_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
                 scent_values = [scent_scores[k] for k in ["Fire", "Earth", "Air", "Water"]]
 
                 fig = make_subplots(rows=1, cols=2, specs=[[{'type':'domain'}, {'type':'domain'}]],
-                                    subplot_titles=['🪐 星の比率', '🌸 香りの比率'])
-                fig.add_trace(go.Pie(labels=labels_list, values=astro_values, name="Astrology", marker_colors=colors_list, hole=.35), 1, 1)
-                fig.add_trace(go.Pie(labels=labels_list, values=scent_values, name="Scent", marker_colors=colors_list, hole=.35), 1, 2)
-                fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5), margin=dict(t=30, b=0, l=0, r=0))
+                                    subplot_titles=['<b>星 (先天的)</b>', '<b>香り (現在)</b>'])
+                fig.add_trace(go.Pie(labels=labels_list, values=astro_values, marker_colors=colors_list, hole=.4, showlegend=False), 1, 1)
+                fig.add_trace(go.Pie(labels=labels_list, values=scent_values, marker_colors=colors_list, hole=.4, showlegend=False), 1, 2)
+                fig.update_layout(margin=dict(t=20, b=0, l=0, r=0))
                 st.plotly_chart(fig, use_container_width=True)
 
-            # --- セクション2: 診断結果 ---
+            # --- 診断レポート（修正版） ---
             st.markdown("---")
-            st.markdown("### 2. 星と香りのズレ診断")
             
-            # 重要な警告メッセージ
-            st.warning("⚠️ **重要な法則**: 今、苦手だと感じる香りは、あなた自身の中に**過剰になっている性質**を表していることが多いです。")
-
+            st.markdown("#### 1. 分析結果の概要")
             st.info(f"""
-            **【ワークシート分析結果】**
+            香り反応ワークで特に強い反応が出たのは以下の点でした。
             
             * **一番心地よかった香り**（今、心身が必要としているエネルギー）：  
-              **{ELEMENT_JP[like_scent_elem]}** の香り ({OIL_NAMES[like_scent_elem]})
-            * **一番苦手だった香り**（今、心身が拒否・抑圧しているエネルギー）：  
-              **{ELEMENT_JP[dislike_scent_elem]}** の香り ({OIL_NAMES[dislike_scent_elem]})
-            """)
-
-            # 本来の資質
-            st.markdown(f"**本来の資質：あなたは【{ELEMENT_JP[core_star_elem]}】の気質を持っています**")
-            st.write(STAR_DEFINITIONS[core_star_elem].replace("〇〇様", f"{name}様"))
-
-            # ズレの構造
-            st.markdown(f"**今の状態：{pattern['type']}**")
-            st.write(f"""
-            {pattern['detail']}
+              **{OIL_NAMES[like_scent_elem]}** ({ELEMENT_JP[like_scent_elem]})
             
-            **💡 迷いの原因** {pattern['cause'].replace("〇〇様", f"{name}様")}
+            * **一番苦手だった香り**（今、心身が拒否・抑圧しているエネルギー）：  
+              **{OIL_NAMES[dislike_scent_elem]}** ({ELEMENT_JP[dislike_scent_elem]})
+            
+            この結果から、あなたの「迷い」の正体が明確に見えてきました。
+            
+            本来のあなたは **【{ELEMENT_JP[core_star_elem]}】** の要素を持っています。  
+            今のあなたの心身の過剰なところを表しているのは **【{ELEMENT_JP[dislike_scent_elem]}】**、  
+            今のあなたが求めていることは **【{ELEMENT_JP[like_scent_elem]}】** です。
             """)
 
-            # --- セクション3: 解決策 ---
-            st.markdown("---")
-            st.markdown("### 3. Navigation：ズレを解消し、美点として輝かせるために")
+            st.markdown(f"#### 2. 本来の資質（星）の解釈：あなたの魂のバランス")
+            st.write(f"まず、あなたが生まれ持った魂のバランス、すなわち【{ELEMENT_JP[core_star_elem]}】が持つ、本来の美点とエネルギーを定義します。")
+            st.markdown(STAR_DEFINITIONS[core_star_elem])
+
+            st.markdown(f"#### 3. 香りの好みで見える体質")
+            # 苦手の分析（DISLIKE_ANALYSISから取得して、オイル名を置換）
+            dislike_text = DISLIKE_ANALYSIS[dislike_scent_elem].replace("[DISLIKE_OIL]", OIL_NAMES[dislike_scent_elem])
+            st.warning(dislike_text)
+
+            st.markdown("#### 【好きな香りはあなたを調和させます】")
+            # 好きの分析（LIKE_ANALYSISから取得して、オイル名を置換）
+            like_text = LIKE_ANALYSIS[like_scent_elem].replace("[LIKE_OIL]", OIL_NAMES[like_scent_elem])
+            st.success(like_text)
+
+            st.divider()
+
             st.write(f"""
-            {name}様のこの「ズレ」は、決して直すべき欠点ではありません。  
+            「ズレ」は、決して直すべき欠点ではありません。  
             むしろ、本来の才能を活かすために必要な「エネルギーの調整」を心身が求めているサインです。
             
-            **「{OIL_NAMES[like_scent_elem]}」** が求めるエネルギーを補い、  
-            **「{OIL_NAMES[dislike_scent_elem]}」** が示す過剰なエネルギーを穏やかに整えることで、  
-            {name}様が本来お持ちの **【{ELEMENT_JP[core_star_elem]}】** の才能（美点）は、迷いなく輝き始めます。
-            
-            ---
-            **アロマクオーレ 本多さえこ**
+            **【{OIL_NAMES[like_scent_elem]}】** が求めるエネルギーを補い、  
+            **【{OIL_NAMES[dislike_scent_elem]}】** が示す過剰なエネルギーを穏やかに整えることで、  
+            あなたが本来お持ちの **【{ELEMENT_JP[core_star_elem]}】** の才能（美点）は、迷いなく輝き始めます。
             """)
+            
+            st.write("")
+            st.write("**アロマクオーレ 本多さえこ**")
 
         except Exception as e:
-            st.error(f"エラーが発生しました: {e}")
+            st.error(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
