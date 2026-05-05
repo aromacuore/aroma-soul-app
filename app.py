@@ -9,6 +9,9 @@ from flatlib import const
 import swisseph as swe
 import os
 import requests
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 # --- 🌟 関数定義 ---
 def get_element(sign_name):
@@ -39,6 +42,21 @@ def download_ephemeris():
             except Exception as e:
                 st.error(f"System Error: {e}")
                 st.stop()
+
+# --- 🚀 スプレッドシート保存関数 ---
+def save_to_sheets(data):
+    try:
+        scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+        creds_dict = st.secrets["gcp_service_account"]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        sheet_url = "https://docs.google.com/spreadsheets/d/10LWBqk_RAV-ZBl3R9uZgxUHYs_yX2LmPo_OH5Dff2ds/edit"
+        sheet = client.open_by_url(sheet_url).sheet1
+        sheet.append_row(data)
+        return True
+    except Exception as e:
+        print(f"データ保存エラー: {e}")
+        return False
 
 # --- Main App ---
 def main():
@@ -338,6 +356,23 @@ def main():
             like_scent_elem = min(scent_scores.keys(), key=lambda k: (scent_scores[k], min_ranks[k]))
             dislike_scent_elem = max(scent_scores.keys(), key=lambda k: (scent_scores[k], -max_ranks[k]))
 
+            # --- 🚀 自動送信処理 ---
+            try:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                sun_str = SIGN_JP[chart.get(const.SUN).sign]
+                moon_str = SIGN_JP[chart.get(const.MOON).sign]
+                asc_str = SIGN_JP[chart.get(const.ASC).sign]
+                
+                row_data = [
+                    timestamp, name, sun_str, moon_str, asc_str, 
+                    ELEMENT_JP[like_scent_elem], ELEMENT_JP[dislike_scent_elem]
+                ]
+                
+                if save_to_sheets(row_data):
+                    st.success("✅ スプレッドシートへのデータ送信が完了しました！", icon="✨")
+            except Exception as e:
+                st.error(f"送信準備エラー: {e}")
+
             # --- 結果表示 ---
             st.header(f"【Aroma Soul Navigation 】あなたの「迷いの原因」分析レポート")
             st.write("「今の心身の状態」と「本来の資質」のズレを分析いたしました。")
@@ -438,3 +473,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
