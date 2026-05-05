@@ -62,62 +62,89 @@ def save_to_sheets(data):
 def main():
     st.set_page_config(page_title="Aroma Soul Navigation", layout="wide")
 
-    # --- 🖨️ 印刷設定（スマホ全ページ出力・最終対策版） ---
+    # --- 🎨 フレンチシャビー・デザイン＆🖨️ 印刷設定 ---
     st.markdown("""
         <style>
+        /* エレガントな明朝体を読み込み */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&display=swap');
+
+        /* 全体のフォントとベースカラー */
+        html, body, [class*="css"] {
+            font-family: 'Noto Serif JP', serif !important;
+            background-color: #FAF6F0 !important; /* エクリュ（生成り色） */
+            color: #5C544D !important; /* チャコールブラウン */
+        }
+
+        /* メインの背景 */
+        .stApp {
+            background-color: #FAF6F0 !important;
+        }
+
+        /* サイドバーの背景 */
+        [data-testid="stSidebar"] {
+            background-color: #F2EBE3 !important; /* アンティークベージュ */
+            border-right: 1px solid #E0D6C8 !important;
+        }
+
+        /* 見出し（H1, H2, H3） */
+        h1, h2, h3 {
+            color: #8C7A6B !important; /* くすんだモカブラウン */
+            font-weight: 400 !important;
+            letter-spacing: 0.05em;
+        }
+
+        /* ボタンのデザイン（ダスティローズ） */
+        .stButton > button {
+            background-color: #C4A4A4 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 4px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+            transition: all 0.3s ease !important;
+            font-family: 'Noto Serif JP', serif !important;
+            padding: 0.5rem 2rem !important;
+        }
+        .stButton > button:hover {
+            background-color: #B59292 !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        }
+
+        /* 入力フォームの枠線 */
+        .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+            border: 1px solid #E0D6C8 !important;
+            background-color: #FFFFFF !important;
+            border-radius: 4px !important;
+            color: #5C544D !important;
+        }
+
+        /* 枠線付きコンテナ（Big3の箱など） */
+        [data-testid="stVerticalBlock"] > div[style*="border"] {
+            border: 1px solid #E0D6C8 !important;
+            background-color: #FFFFFF !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
+        }
+        
+        /* 案内や警告の箱（Info, Successなど）をシャビーカラーに */
+        div[data-testid="stAlert"] {
+            background-color: #F9F5F1 !important;
+            border: 1px solid #E0D6C8 !important;
+            color: #5C544D !important;
+            border-radius: 4px !important;
+        }
+
+        /* 印刷設定 */
         @media print {
-            /* 1. 【CRITICAL FIX】全体を印刷モードで全展開させる */
             html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], .main {
-                overflow: visible !important; /* スクロール機能を無効化 */
-                height: auto !important; /* 高さをコンテンツに合わせて全展開 */
-                position: static !important; 
+                overflow: visible !important; height: auto !important; position: static !important; 
             }
-            
-            /* 2. 不要な要素を消す */
-            [data-testid="stSidebar"], .stButton, header, footer, [data-testid="stToolbar"] {
-                display: none !important;
-            }
-            
-            /* 3. 用紙設定 (A4) */
-            @page {
-                size: A4 portrait;
-                margin: 5mm; 
-            }
-
-            /* 4. 全体の縮尺調整 (横幅と縦幅の同時対策) */
-            .block-container {
-                max-width: 100% !important;
-                width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                zoom: 0.75 !important; /* 横の切れを防ぐため75%に縮小 */
-            }
-
-            /* 5. 文字の折り返し設定 */
-            .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div {
-                white-space: pre-wrap !important;
-                word-wrap: break-word !important;
-            }
-
-            /* 6. カラムを強制的に「横並び」にし、改ページを防ぐ */
-            [data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-            }
-            
-            [data-testid="column"] {
-                flex: 1 !important;
-                width: auto !important;
-                page-break-inside: avoid !important;
-            }
-            
-            /* 7. グラフのサイズ調整 */
-            .stPlotlyChart {
-                width: 100% !important;
-                height: auto !important;
-                page-break-inside: avoid;
-            }
+            [data-testid="stSidebar"], .stButton, header, footer, [data-testid="stToolbar"] { display: none !important; }
+            @page { size: A4 portrait; margin: 5mm; }
+            .block-container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; zoom: 0.75 !important; }
+            .stMarkdown, p, h1, h2, h3, h4, h5, h6, li, span, div { white-space: pre-wrap !important; word-wrap: break-word !important; }
+            [data-testid="stHorizontalBlock"] { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; }
+            [data-testid="column"] { flex: 1 !important; width: auto !important; page-break-inside: avoid !important; }
+            .stPlotlyChart { width: 100% !important; height: auto !important; page-break-inside: avoid; }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -241,7 +268,6 @@ def main():
         """
     }
 
-    # --- 4. 好きな香りはあなたを調和させます (好き＝不足・薬) ---
     LIKE_ANALYSIS = {
         "Fire": """
         * **好きな香り:** [LIKE_OIL] など
@@ -291,7 +317,7 @@ def main():
         st.header("1. 出生データの入力")
         name = st.text_input("お名前", "Guest")
         col_b1, col_b2, col_b3 = st.columns(3)
-        b_year = col_b1.number_input("年", 1950, 2025, 1990)
+        b_year = col_b1.number_input("年", 1950, 2026, 1990)
         b_month = col_b2.number_input("月", 1, 12, 1)
         b_day = col_b3.number_input("日", 1, 31, 1)
         col_b4, col_b5 = st.columns(2)
@@ -417,7 +443,11 @@ def main():
                                     subplot_titles=['<b>星 (先天的)</b>', '<b>香り (現在)</b>'])
                 fig.add_trace(go.Pie(labels=labels_list, values=astro_values, marker_colors=colors_list, hole=.4, showlegend=False), 1, 1)
                 fig.add_trace(go.Pie(labels=labels_list, values=scent_values, marker_colors=colors_list, hole=.4, showlegend=False), 1, 2)
-                fig.update_layout(margin=dict(t=20, b=0, l=0, r=0))
+                fig.update_layout(
+                    margin=dict(t=20, b=0, l=0, r=0),
+                    paper_bgcolor='rgba(0,0,0,0)', /* 背景色を透明にして馴染ませる */
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
                 st.plotly_chart(fig, use_container_width=True)
 
             # --- 診断レポート ---
@@ -445,12 +475,10 @@ def main():
             st.markdown(STAR_DEFINITIONS[core_star_elem])
 
             st.markdown(f"#### 3. 香りの好みで見える体質")
-            # 苦手の分析
             dislike_text = DISLIKE_ANALYSIS[dislike_scent_elem].replace("[DISLIKE_OIL]", OIL_NAMES[dislike_scent_elem])
             st.warning(dislike_text)
 
             st.markdown("#### 【好きな香りはあなたを調和させます】")
-            # 好きの分析
             like_text = LIKE_ANALYSIS[like_scent_elem].replace("[LIKE_OIL]", OIL_NAMES[like_scent_elem])
             st.success(like_text)
 
@@ -473,4 +501,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
